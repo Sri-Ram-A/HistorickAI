@@ -1,0 +1,10 @@
+### ADDED BY ME
+**/videos/
+**/audios/
+**/__pycache__/
+**/videos/
+*.mp4
+**/*.mp4
+*.mp3
+**/*.mp3
+/venv/

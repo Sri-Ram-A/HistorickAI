@@ -1,0 +1,10 @@
+npx create-next-app@latest
+# see this for configouring tailwind css : https://tailwindcss.com/docs/installation/using-postcss
+# dont follow this: https://tailwindcss.com/docs/installation/framework-guides/nextjs
+I had to add import tailwindcss in my global file and everything worked automatically
+npm ci framer-motion
+npm ci lucide-react 
+npm i tailwind-merge
+npm i clsx
+npm install @tabler/icons-react
+my tailwind version is v4..better use v3 since it has good community supoort for next js
