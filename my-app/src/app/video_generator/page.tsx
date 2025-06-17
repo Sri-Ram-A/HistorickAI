@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Video, Loader2, CheckCircle2, XCircle, Send } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { BASE_URL } from "@/routes"
 
 const steps = [
   { id: 1, title: "Generating Script" },
@@ -53,7 +54,7 @@ export default function VideoGenerator() {
     setCurrentStep(1)
 
     try {
-      const response = await fetch("http://localhost:5000/api/chat", {
+      const response = await fetch(BASE_URL+"/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: `generate video ${prompt}` }),
@@ -231,7 +232,7 @@ export default function VideoGenerator() {
                   controls
                   autoPlay
                 >
-                  <source src={`http://localhost:5000/api/${videoPath}`} type="video/mp4" />
+                  <source src={`http://localhost:5000/api/videos/${videoPath}`} type="video/mp4" />
                   Your browser does not support the video tag.
                 </video>
 

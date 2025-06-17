@@ -116,19 +116,4 @@ class VideoGenerator:
         logger.success("Final video created at api\videos\final_video.mp4")
         return output_path
 
-if __name__ == "__main__":
-    videoGen=VideoGenerator()
-    query="100 words story on cat and a mouse"
-    response=videoGen.generate_story(query=query)
-    # pprint.pprint(response)
-    videoGen.text_to_speech(query=response.get("script",""))
-    video_dict=videoGen.fetch_videos_concurrently(prompts=response.get("scenes",["Error","Not Found"]))
-    video_paths = [
-            video[next(iter(video))]
-            for prompt, video in video_dict.items()
-            if video and next(iter(video)) is not None
-        ]
-    if None in video_paths:
-        video_paths.remove(None)
-    videoGen.create_final_video(video_paths=video_paths)
 

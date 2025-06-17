@@ -4,8 +4,13 @@ import { motion } from "framer-motion";
 import { Instagram, Mail, Linkedin } from "lucide-react";
 import { teamMembers, testimonials } from "@/data";
 import '../globals.css';
-
+import { useState, useEffect } from "react"
 const About = () => {
+  // thiis hasmounted is something related to server and client side rendering
+  const [hasMounted, setHasMounted] = useState(false);
+  useEffect(() => {
+    setHasMounted(true);
+  }, []);
   const features = [
     {
       icon: (

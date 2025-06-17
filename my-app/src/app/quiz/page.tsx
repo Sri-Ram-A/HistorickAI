@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { QuizQuestion } from "@/types";
+import { BASE_URL } from "@/routes";
 
 export default function Quiz() {
   const [hasMounted, setHasMounted] = useState(false);
@@ -25,7 +26,7 @@ export default function Quiz() {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch("http://127.0.0.1:5000/generate-quiz", {
+      const response = await fetch(BASE_URL+"/generate-quiz", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ topic }),

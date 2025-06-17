@@ -123,8 +123,8 @@ export function CustomSidebar() {
             <>
               <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-blue-500" />
               <div className="flex flex-col">
-                <span className="font-medium text-gray-700 dark:text-gray-200">User Name</span>
-                <span className="text-xs">user@example.com</span>
+                <span className="font-medium text-gray-700 dark:text-gray-200">History in the Making</span>
+                <span className="text-xs">historickai@gmail.com</span>
               </div>
             </>
           )}

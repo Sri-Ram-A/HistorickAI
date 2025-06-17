@@ -1,8 +1,4 @@
-@import "tailwindcss"; 
-/* the top import was added by me and it started working */
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
 
 :root {

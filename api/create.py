@@ -23,6 +23,8 @@ def generate_video(query):
     if None in video_paths:
         video_paths.remove(None)
     videoGen.create_final_video(video_paths=video_paths)
+    
+    return response.get("script","")
 
 def generate_story(query) -> dict:
     response = model.generate(schemas.Story, system_instructions.story_instruction, query)
@@ -42,9 +44,3 @@ def generate_quiz(query) -> dict :
     logger.info("Quiz generated ❤️")
     return parsed
 
-def generate_video(query):
-    pass
-
-if __name__ == "__main__":
-    import pprint
-    pprint.pprint(generate_quiz("Generate quiz on World War 1"))

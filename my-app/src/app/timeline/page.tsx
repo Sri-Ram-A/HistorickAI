@@ -4,6 +4,7 @@ import { TimelineEntry } from "../../types"; // Assuming you have a types file
 import { Timeline } from "../../components/timeline";
 import { motion } from "framer-motion";
 import Image from "next/image";
+import { BASE_URL } from "@/routes";
 export default function Home() {
 
   const [timelineData, setTimelineData] = useState<TimelineEntry[]>([]);
@@ -19,7 +20,7 @@ export default function Home() {
     setError(null);
 
     try {
-      const response = await fetch("http://localhost:5000/generate-timeline", {
+      const response = await fetch(BASE_URL+"/generate-timeline", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -34,7 +35,7 @@ export default function Home() {
           title: item.title,
           content: (
             <div className="p-8 bg-white/10 backdrop-blur-xl rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-white/20 dark:border-white/10 transition-all duration-300 hover:shadow-[0_8px_30px_rgb(0,0,0,0.2)]">
-              <h2 className="text-neutral-800 dark:text-neutral-100 text-xl md:text-2xl font-bold mb-4 bg-gradient-to-r from-purple-500 to-blue-500 bg-clip-text text-transparent">
+              <h2 className="text-transparent dark:text-neutral-100 text-xl md:text-2xl font-bold mb-4 bg-gradient-to-r from-purple-500 to-blue-500 bg-clip-text">
                 {item.heading}
               </h2>
               <h3 className="text-neutral-700 dark:text-neutral-300 text-sm md:text-base font-medium mb-8 leading-relaxed">
@@ -50,6 +51,8 @@ export default function Home() {
                 <Image
                   src={item.image_source}
                   alt={item.alternative}
+                  fill
+                  style={{ objectFit: "cover" }}
                   className="rounded-xl object-cover shadow-lg transform transition-transform duration-300 hover:scale-[1.02]"
                   sizes="(max-width: 768px) 100vw, 50vw"
                   priority // Optional: helps with LCP performance
@@ -93,7 +96,7 @@ export default function Home() {
           transition={{ duration: 0.5, ease: "easeOut" }}
           className="w-full max-w-xl bg-white/10 backdrop-blur-xl p-8 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-white/20 mb-8"
         >
-          <h1 className="text-3xl font-bold mb-6 text-white text-center bg-gradient-to-r from-purple-500 to-blue-500 bg-clip-text text-transparent">
+          <h1 className="text-3xl font-bold mb-6 text-center bg-gradient-to-r from-purple-500 to-blue-500 bg-clip-text text-transparent">
             Generate Your Timeline
           </h1>
           <input

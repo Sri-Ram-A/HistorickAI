@@ -1,7 +1,7 @@
-npx create-next-app@latest
-# see this for configouring tailwind css : https://tailwindcss.com/docs/installation/using-postcss
-# dont follow this: https://tailwindcss.com/docs/installation/framework-guides/nextjs
-I had to add import tailwindcss in my global file and everything worked automatically
+https://tailwindcss.com/docs/installation/framework-guides/nextjs 
+Exactly follow above steps dear
+
+automatically
 npm ci framer-motion
 npm ci lucide-react 
 npm i tailwind-merge
