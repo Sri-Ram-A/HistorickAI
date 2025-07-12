@@ -9,3 +9,7 @@
 **/*.mp3
 /venv/
 .env/
+**/*.wav
+
+**/vosk-model/
+models/

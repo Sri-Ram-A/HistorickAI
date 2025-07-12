@@ -1,4 +1,5 @@
-from pydantic import BaseModel
+from pydantic import BaseModel,RootModel
+from typing import List
 
 class Story(BaseModel):
     script: str
@@ -15,3 +16,4 @@ class Quiz(BaseModel):
     question: str
     options: list[str]
     correctAnswer: str
+
