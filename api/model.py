@@ -21,7 +21,7 @@ def generate(schema=None,system_instruction="No system instruction provided",con
         contents=contents,
         config=config,
     )
-    return response.text #<class 'str'>
+    return response.text # <class 'str'>
 
 def stream(contents="No query provided"):
     API_KEY=os.getenv("API_KEY")

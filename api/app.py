@@ -4,8 +4,6 @@ import create
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes and origins
 
-
-
 @app.route('/api/videos/<filename>')
 def serve_video(filename):
     return send_from_directory('./videos', filename)

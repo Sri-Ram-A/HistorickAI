@@ -11,5 +11,6 @@
 .env/
 **/*.wav
 
+.env/
 **/vosk-model/
 models/

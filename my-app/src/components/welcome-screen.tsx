@@ -55,9 +55,11 @@ export function WelcomeScreen({ onStart }: WelcomeScreenProps) {
           whileTap={{ scale: 0.95 }}
           onClick={onStart}
           className="mt-4 px-6 py-2 bg-gradient-to-r from-blue-200 via-blue-400 to-violet-600 text-white rounded-full flex items-center gap-2 hover:shadow-lg transition-shadow"
+          disabled={true}
         >
           Let's Begin
         </motion.button>
+        <h1>(Currently Ongoing,Explore the sidebar)</h1>
       </motion.div>
     </div>
   )
