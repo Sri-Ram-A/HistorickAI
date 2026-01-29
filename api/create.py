@@ -13,7 +13,7 @@ os.makedirs("./audios", exist_ok=True)
 def generate_video(query):
     videoGen=VideoGenerator()
     response=videoGen.generate_story(query=query)
-    videoGen.text_to_speech(query=response.get("script",""))
+    videoGen.text_to_speech(query=response.get("script") or response.get("story") or "Backend ran into some problem,No story Sorry")
     video_dict=videoGen.fetch_videos_concurrently(prompts=response.get("scenes",["Error","Not Found"]))
     video_paths = [
             video[next(iter(video))]

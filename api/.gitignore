@@ -13,4 +13,5 @@
 .env/
 **/vosk-model/
 models/
-api/.env
+.env
+.env.local

@@ -15,5 +15,5 @@ class TimelineEntry(BaseModel):
 class Quiz(BaseModel):
     question: str
     options: list[str]
-    correctAnswer: str
+    answer: str
 

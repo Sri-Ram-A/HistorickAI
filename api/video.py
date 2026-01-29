@@ -86,34 +86,58 @@ class VideoGenerator:
         logger.info("Audio generated successfully🎙️")
 
     def create_final_video(self,video_paths: list, target_width=1200, target_height=720, fps=30):
+        logger.info(f"Starting video creation with {len(video_paths)} video clips")
         clips = []
-        for video_path in video_paths:
-            clip = VideoFileClip(video_path)
-            clip_duration = clip.duration
-            end_time = min(clip_duration, 8)
-            subclip = clip.subclipped(0, end_time)
-            try:
-                resized_clip = subclip.resized(width=target_width, height=target_height)
-            except AttributeError:
-                resized_clip = subclip.resized(newsize=(target_width, target_height))
-            clips.append(resized_clip)
+        try:
+            for video_path in video_paths:
+                logger.debug(f"Processing video: {video_path}")
+                clip = VideoFileClip(video_path)
+                clip_duration = clip.duration
+                logger.debug(f"Original clip duration: {clip_duration} seconds")
+                end_time = min(clip_duration, 8)
+                logger.debug(f"Trimming clip to {end_time} seconds")
+                subclip = clip.subclipped(0, end_time)
+                try:
+                    logger.debug(f"Resizing clip to {target_width}x{target_height}")
+                    resized_clip = subclip.resized(width=target_width, height=target_height)
+                except AttributeError:
+                    logger.debug("Using alternative resize method")
+                    resized_clip = subclip.resized(newsize=(target_width, target_height))
+                clips.append(resized_clip)
+                logger.debug(f"Clip added to list. Total clips: {len(clips)}")
 
-        final_clip = concatenate_videoclips(clips, method="compose")
-        audio_clip = AudioFileClip("./audios/text_to_speech.mp3")
-        audio_duration = audio_clip.duration
-        final_clip = final_clip.with_audio(audio_clip)
-        if final_clip.duration > audio_duration:
-            final_clip = final_clip.subclipped(0, audio_duration)
-        output_path = f"./videos/final_video.mp4"
-        final_clip.write_videofile(output_path, codec="libx264", audio_codec="aac")
+            logger.info(f"Concatenating {len(clips)} video clips")
+            final_clip = concatenate_videoclips(clips, method="compose")
+            logger.debug(f"Final clip duration before audio: {final_clip.duration} seconds")
+            
+            logger.info("Loading audio file")
+            audio_clip = AudioFileClip("./audios/text_to_speech.mp3")
+            audio_duration = audio_clip.duration
+            logger.debug(f"Audio duration: {audio_duration} seconds")
+            
+            logger.info("Adding audio to video")
+            final_clip = final_clip.with_audio(audio_clip)
+            
+            if final_clip.duration > audio_duration:
+                logger.debug(f"Trimming video to match audio duration ({audio_duration}s)")
+                final_clip = final_clip.subclipped(0, audio_duration)
+            
+            output_path = f"./videos/final_video.mp4"
+            logger.info(f"Writing final video to: {output_path}")
+            final_clip.write_videofile(output_path, codec="libx264", audio_codec="aac")
 
-        final_clip.close()
-        audio_clip.close()
-        for clip in clips:
-            clip.close()
+            logger.debug("Starting resource cleanup")
+            final_clip.close()
+            audio_clip.close()
+            for clip in clips:
+                clip.close()
+            logger.debug("Resource cleanup completed")
 
-        logger.success("Video generated successfully😄🙋‍♂️")
-        logger.success("Final video created at api\videos\final_video.mp4")
-        return output_path
-
-
+            logger.success("Video generated successfully😄🙋‍♂️")
+            logger.success(f"Final video created at {output_path}")
+            return output_path
+            
+        except Exception as e:
+            logger.error(f"Error in create_final_video: {str(e)}")
+            logger.exception("Detailed traceback:")
+            raise
