@@ -8,9 +8,9 @@
 *.mp3
 **/*.mp3
 /venv/
-.env/
 **/*.wav
 
 .env/
 **/vosk-model/
 models/
+api/.env
