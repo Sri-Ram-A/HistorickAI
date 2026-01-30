@@ -1,10 +1,9 @@
-api/.env
-api/.env.local
+
 ### ADDED BY ME
 **/videos/
 **/audios/
 **/__pycache__/
-**/videos/
+
 *.mp4
 **/*.mp4
 *.mp3
@@ -17,3 +16,7 @@ api/.env.local
 models/
 .env
 .env.local
+
+api/.env
+api/.env.local
+api/src/media/

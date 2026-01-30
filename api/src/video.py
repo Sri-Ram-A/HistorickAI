@@ -116,7 +116,7 @@ def create_final_video(
             stroke_color="black",
             stroke_width=1,
             method="caption",
-            bg_color="black"
+            bg_color="black",
             size=(int(final_video.w * 0.9), None),
             text_align="center",
         )
