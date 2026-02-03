@@ -20,3 +20,7 @@ models/
 api/.env
 api/.env.local
 api/src/media/
+backend/app/migrations/
+backend/app/__pycache__/
+frontend/node_modules/
+backend/db.sqlite3

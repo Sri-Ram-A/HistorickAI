@@ -3,13 +3,9 @@ flask-cors
 Flask-SocketIO
 google-genai
 loguru
-moviepy
 numpy
 pillow
-pyttsx3
 tqdm
-vosk
-
 
 pydub
 pyfiglet
@@ -24,3 +20,10 @@ safetensors
 serpapi
 google-search-results
 groq
+
+djangorestframework
+djangorestframework-simplejwt
+docling
+psycopg[binary]
+pytubefix
+

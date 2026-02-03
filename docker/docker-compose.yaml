@@ -1,0 +1,7 @@
+# https://github.com/docker-library/docs/blob/master/postgres/README.md#-via-docker-compose - Used this to write code 
+# Use postgres/example user/password credentials
+# Use postgres/example user/password credentials
+
+# services:
+#   - name: ankane/pgvector:latest
+#     alias: vector_postgres

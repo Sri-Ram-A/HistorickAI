@@ -221,4 +221,4 @@ def generate_video(title:str,query: str):
     )
 
 if __name__ == "__main__":
-    generate_video("IndianIndependence","Explain India's First fight for Independece")
+    generate_video("SherlockHolmes","Sherlock Holmes 100 words story")
