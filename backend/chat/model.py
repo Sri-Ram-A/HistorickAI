@@ -1,0 +1,32 @@
+# from google import genai
+from loguru import logger
+import os
+from groq import Groq
+API_KEY=os.getenv("GROQ_API_KEY")
+logger.success("Loaded API KEY succesfully✨")
+client = Groq(api_key=API_KEY)
+
+def generate(schema=None,system_instruction="No system instruction provided",contents="No query provided "):
+    completion = client.chat.completions.create(
+        model="openai/gpt-oss-120b",
+        messages=[
+        {
+            "role": "system",
+            "content": system_instruction
+        },
+        {
+            "role": "user",
+            "content": f"Strictly generate the json output in the given format : {schema} on the topic : {contents}"
+        }
+        ],
+        temperature=1,
+        max_completion_tokens=8192,
+        top_p=1,
+        stream=False,
+        response_format={"type": "json_object"},
+        stop=None
+    )
+
+    logger.debug(completion.choices[0].message.content)
+    return completion.choices[0].message.content
+

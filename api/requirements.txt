@@ -25,5 +25,6 @@ djangorestframework
 djangorestframework-simplejwt
 docling
 psycopg[binary]
-pytubefix
-
+# pytubefix
+pytube
+openai-whisper # for audio transcription by Docling

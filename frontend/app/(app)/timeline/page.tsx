@@ -1,0 +1,215 @@
+"use client";
+
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import Image from "next/image";
+import { REQUEST } from "@/routes";
+import { TimelineEntry } from "@/types";
+import  {Timeline}  from "@/components/timeline";
+
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
+
+// Icons
+import { 
+  Search, 
+  Sparkles, 
+  Clock, 
+  ArrowRight, 
+  Loader2, 
+  RefreshCcw,
+  History 
+} from "lucide-react";
+
+export default function TimelinePage() {
+  const [timelineData, setTimelineData] = useState<TimelineEntry[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
+  const [userQuery, setUserQuery] = useState<string>("");
+  const [isGenerated, setIsGenerated] = useState<boolean>(false);
+
+  const handleGenerate = async () => {
+    if (!userQuery.trim()) return;
+    setLoading(true);
+    setError(null);
+
+    try {
+      // Using your custom REQUEST utility
+      const data = await REQUEST("POST", "chat/generate_timeline/", { message: userQuery });
+      
+      const formattedData = data.response.map((item: any) => ({
+        title: item.title,
+        content: (
+          <div className="group relative space-y-6">
+            {/* Entry Header */}
+            <div className="space-y-2">
+              <Badge variant="outline" className="border-purple-500/30 text-purple-400 bg-purple-500/5 backdrop-blur-md">
+                Historical Milestone
+              </Badge>
+              <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-white group-hover:text-purple-400 transition-colors">
+                {item.heading}
+              </h2>
+            </div>
+
+            {/* Description Card */}
+            <Card className="p-6 bg-white/5 dark:bg-zinc-900/40 border-white/10 backdrop-blur-xl shadow-2xl">
+              <p className="text-neutral-400 text-base md:text-lg leading-relaxed italic">
+                "{item.description}"
+              </p>
+            </Card>
+
+            {/* Visual Section */}
+            <div className="relative aspect-video w-full overflow-hidden rounded-2xl border border-white/10 shadow-2xl">
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent z-10" />
+              <Image
+                src={item.image_source}
+                alt={item.alternative || "Historical visualization"}
+                fill
+                className="object-cover transition-transform duration-700 group-hover:scale-105"
+                sizes="(max-width: 768px) 100vw, 50vw"
+              />
+              <div className="absolute bottom-4 left-4 z-20 flex items-center gap-2">
+                <Clock className="w-4 h-4 text-purple-400" />
+                <span className="text-xs font-medium text-white/80 tracking-widest uppercase">Visual Archive Record</span>
+              </div>
+            </div>
+          </div>
+        ),
+      }));
+
+      setTimelineData(formattedData);
+      setIsGenerated(true);
+    } catch (err: any) {
+      setError(err.message || "An error occurred while accessing the archives.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="relative min-h-screen bg-neutral-950 text-white selection:bg-purple-500/30">
+      {/* Cinematic Background Overlay */}
+      <div 
+        className="fixed inset-0 z-0 opacity-20"
+        style={{
+          backgroundImage: `url('/backgrounds/timelineBackground.jpeg')`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          filter: 'grayscale(100%) brightness(0.5)'
+        }}
+      />
+      <div className="fixed inset-0 z-0 bg-gradient-to-b from-neutral-950 via-neutral-950/80 to-neutral-950" />
+
+      <main className="relative z-10 flex flex-col items-center">
+        
+        {/* State 1: Search Header */}
+        <div className={cn(
+          "w-full max-w-4xl px-6 transition-all duration-1000 ease-in-out",
+          isGenerated ? "pt-12 pb-8" : "pt-[30vh]"
+        )}>
+          <AnimatePresence mode="wait">
+            {!isGenerated ? (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                className="text-center space-y-8"
+              >
+                <div className="space-y-4">
+                  <Badge className="bg-white/10 text-white hover:bg-white/20 border-white/10 px-4 py-1">
+                    <Sparkles className="w-3 h-3 mr-2 text-purple-400" />
+                    AI-Powered Chronology
+                  </Badge>
+                  <h1 className="text-6xl md:text-8xl font-black tracking-tighter bg-gradient-to-b from-white to-white/40 bg-clip-text text-transparent">
+                    The Archive.
+                  </h1>
+                  <p className="text-neutral-500 text-lg md:text-xl max-w-xl mx-auto font-medium">
+                    Enter a subject to reconstruct its journey through time with photographic precision.
+                  </p>
+                </div>
+
+                <div className="relative max-w-2xl mx-auto">
+                  <Input
+                    placeholder="e.g. The Renaissance, SpaceX, or Ancient Rome..."
+                    value={userQuery}
+                    onChange={(e) => setUserQuery(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && handleGenerate()}
+                    className="h-16 pl-6 pr-40 bg-white/5 border-white/10 rounded-2xl text-xl backdrop-blur-2xl focus-visible:ring-purple-500/50"
+                  />
+                  <Button 
+                    onClick={handleGenerate}
+                    disabled={loading || !userQuery}
+                    className="absolute right-2 top-2 h-12 px-6 bg-white text-black hover:bg-neutral-200 rounded-xl font-bold transition-transform active:scale-95"
+                  >
+                    {loading ? <Loader2 className="animate-spin w-5 h-5" /> : "Generate"}
+                  </Button>
+                </div>
+              </motion.div>
+            ) : (
+              <motion.div 
+                initial={{ opacity: 0 }} 
+                animate={{ opacity: 1 }}
+                className="flex flex-col md:flex-row items-center justify-between gap-6 border-b border-white/10 pb-8"
+              >
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2 text-purple-400 font-bold uppercase tracking-widest text-xs">
+                    <History className="w-3 h-3" />
+                    Archive Result
+                  </div>
+                  <h2 className="text-4xl font-bold capitalize tracking-tight">{userQuery}</h2>
+                </div>
+                <Button 
+                  variant="outline" 
+                  onClick={() => { setTimelineData([]); setIsGenerated(false); }}
+                  className="rounded-full bg-white/5 border-white/10 hover:bg-white/10 group"
+                >
+                  <RefreshCcw className="w-4 h-4 mr-2 group-hover:rotate-180 transition-transform duration-500" />
+                  New Exploration
+                </Button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
+        {/* State 2: Loading Overlay */}
+        {loading && !isGenerated && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md">
+            <div className="text-center space-y-4">
+              <div className="relative w-24 h-24 mx-auto">
+                <div className="absolute inset-0 border-t-2 border-purple-500 rounded-full animate-spin" />
+                <div className="absolute inset-4 border-t-2 border-blue-500 rounded-full animate-spin [animation-duration:1.5s]" />
+              </div>
+              <p className="text-white font-mono tracking-widest text-sm animate-pulse">RECONSTRUCTING TIMELINE...</p>
+            </div>
+          </div>
+        )}
+
+        {/* State 3: Error */}
+        {error && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-8">
+            <Badge variant="destructive" className="py-2 px-6 text-sm">{error}</Badge>
+          </motion.div>
+        )}
+
+        {/* State 4: Timeline Rendering */}
+        {isGenerated && timelineData.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 1, ease: "easeOut" }}
+            className="w-full"
+          >
+            <Timeline data={timelineData} />
+          </motion.div>
+        )}
+      </main>
+    </div>
+  );
+}
+
+// Helper function for conditional classes
+function cn(...classes: any[]) {
+  return classes.filter(Boolean).join(" ");
+}

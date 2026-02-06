@@ -23,6 +23,7 @@ class CreateFolderSerializer(serializers.ModelSerializer):
             return attrs
 
 class CreateFileSerializer(serializers.ModelSerializer):
+    file = serializers.FileField(required=False, allow_null=True)
     class Meta:
         model = File
         fields = ['id','name','file','folder','uploaded_at']

@@ -11,7 +11,7 @@ export function useFolders() {
     const fetch = React.useCallback(async () => {
         setLoading(true)
         try {
-            const data = await REQUEST("GET", "view/folders/")
+            const data = await REQUEST("GET", "folder/view/folders/")
             setFolders(data || [])
         } finally {
             setLoading(false)

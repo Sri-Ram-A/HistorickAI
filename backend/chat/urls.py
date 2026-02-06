@@ -5,4 +5,7 @@ from . import views
 
 urlpatterns = [
     path("retrieve/",views.RetrieveChunksView.as_view(),name="retrieve-chunks"),
+    path("generate_quiz/", views.CreateQuizAPIView.as_view(),name="generate-quiz"),
+    path("generate_timeline/", views.CreateTimelineAPIView.as_view(),name="generate-timeline"),
+
 ]

@@ -9,14 +9,14 @@ import { File as FileIcon, Folder as FolderIcon, MoreHorizontal, UploadCloud, Pl
 import { FileUpload } from "@/components/ui/file-upload";
 import { REQUEST } from "@/routes";
 import { FileT, FolderT } from "@/types";
-import { useFolders } from "@/hooks/use-folders";
+import { useFolders } from "@/hooks/useFolders";
 import { useRouter } from "next/navigation";
 
 const API = {
-  CREATE_FILE: "create/files/",
-  CREATE_FOLDER: "create/folder/",
-  PATCH_FOLDER: (id: string) => `folders/${id}/`,
-  PATCH_FILE: (id: string) => `files/${id}/`,
+  CREATE_FILE: "folder/create/files/",
+  CREATE_FOLDER: "folder/create/folder/",
+  PATCH_FOLDER: (id: string) => `folder/folders/${id}/`,
+  PATCH_FILE: (id: string) => `folder/files/${id}/`,
 };
 
 /* -------------------- EditableText --------------------
