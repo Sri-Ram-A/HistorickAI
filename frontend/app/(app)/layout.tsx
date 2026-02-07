@@ -2,6 +2,7 @@
 
 import React from "react"
 import { AppSidebar } from "@/components/reusables/app-sidebar"
+import { Toaster } from "@/components/ui/sonner"
 
 import {
     SidebarProvider,
@@ -32,6 +33,7 @@ export default function CitizenLayout({
                 <main className="flex-1 p-4">
                     {children}
                 </main>
+                <Toaster />
             </SidebarInset>
         </SidebarProvider>
     )

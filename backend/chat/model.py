@@ -37,7 +37,7 @@ def generate(schema=None,system_instruction="No system instruction provided",con
     response = completion.choices[0].message.content
     logger.debug("Model output:")
     try:
-        data = json.loads(response)
+        data = json.loads(str(response))
         formatted = json.dumps(data, indent=2, ensure_ascii=False)
         console.print(Syntax(formatted, "json", theme="monokai"))
     except Exception:

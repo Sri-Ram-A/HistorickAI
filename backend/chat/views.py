@@ -41,7 +41,7 @@ class RetrieveChunksView(APIView):
             "count": len(results),
             "results": results
         }, status=status.HTTP_200_OK)
-
+@extend_schema(tags=["Chat"])
 class CreateQuizAPIView(APIView):
     serializer_class = serializers.QuizRequestSerializer
     def post(self, request):
@@ -66,6 +66,8 @@ class CreateQuizAPIView(APIView):
         except Exception as e:
             logger.exception("Quiz generation failed")
             return Response({"error": str(e)},status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+@extend_schema(tags=["Chat"])
 class CreateTimelineAPIView(APIView):
 
     serializer_class = serializers.TimelineRequestSerializer
@@ -98,6 +100,8 @@ class CreateTimelineAPIView(APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
+
+@extend_schema(tags=["Chat"])
 class CreateDiagramAPIView(APIView):
     def post(self, request):
         topic = request.data.get("topic", "")
@@ -111,18 +115,17 @@ class CreateDiagramAPIView(APIView):
                 system_instruction=system_instructions.tldraw_instruction,
                 contents=topic,
             )
-
             # Parse JSON
             parsed = json.loads(response_str)
-
             # Validate with Pydantic
             diagram_obj = tldraw.TldrawDiagram.model_validate(parsed)
             return Response(diagram_obj.model_dump(), status=status.HTTP_200_OK)
 
         except ValidationError as e:
-            logger.error("Invalid diagram JSON: %s", e)
+            logger.error(f"Invalid diagram JSON: {e}")
             return Response({"error": "Invalid diagram format", "details": e.errors()}, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
 
         except Exception as e:
             logger.exception("Diagram generation failed")
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
