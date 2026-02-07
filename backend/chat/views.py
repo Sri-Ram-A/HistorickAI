@@ -5,10 +5,11 @@ from rest_framework import status
 from django.shortcuts import get_object_or_404
 from pgvector.django import CosineDistance
 from drf_spectacular.utils import extend_schema
+from pydantic import ValidationError
 
 from folders.models import Folder, Chunk
 from folders.signals import embedding_model
-from . import model,schemas,system_instructions,serializers
+from . import model,schemas,system_instructions,serializers,tldraw
 import json
 from loguru import logger
 # Create your views here.
@@ -97,3 +98,31 @@ class CreateTimelineAPIView(APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
+class CreateDiagramAPIView(APIView):
+    def post(self, request):
+        topic = request.data.get("topic", "")
+        if not topic:
+            return Response({"error": "Topic is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            # Call model (strict schema ask)
+            response_str = model.generate(
+                schema=tldraw.TldrawDiagram,
+                system_instruction=system_instructions.tldraw_instruction,
+                contents=topic,
+            )
+
+            # Parse JSON
+            parsed = json.loads(response_str)
+
+            # Validate with Pydantic
+            diagram_obj = tldraw.TldrawDiagram.model_validate(parsed)
+            return Response(diagram_obj.model_dump(), status=status.HTTP_200_OK)
+
+        except ValidationError as e:
+            logger.error("Invalid diagram JSON: %s", e)
+            return Response({"error": "Invalid diagram format", "details": e.errors()}, status=status.HTTP_422_UNPROCESSABLE_ENTITY)
+
+        except Exception as e:
+            logger.exception("Diagram generation failed")
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

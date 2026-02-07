@@ -28,3 +28,4 @@ psycopg[binary]
 # pytubefix
 pytube
 openai-whisper # for audio transcription by Docling
+rich

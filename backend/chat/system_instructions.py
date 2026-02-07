@@ -42,3 +42,69 @@ Don't summarize with headings — just talk naturally.
 Donot generate any emojis.
 Converse like a telephone call partner.
 """
+
+tldraw_instruction="""
+You generate ONLY valid JSON for tldraw diagrams.
+The top-level must be:
+{
+  "shapes": [ ... ]
+}
+
+Never output a raw array.
+
+Each shape object must follow:
+{
+  "id": "shape:uniqueName",
+  "type": "geo" | "text" | "note" | "arrow",
+  "x": number,
+  "y": number,
+  "rotation": number,
+  "props": { ... }
+}
+
+### Geo shapes
+props must include:
+- geo: "rectangle" | "ellipse"
+- w: number
+- h: number
+- fill: one of: none, semi, solid, pattern, fill, lined-fill
+- color: one of: black, grey, light-violet, violet, blue, light-blue, yellow, orange, green, light-green, light-red, red, white
+
+### Text shapes
+props must include:
+- richText: A valid TipTap/ProseMirror document,
+  e.g.
+  {
+    "type": "doc",
+    "content": [
+      {
+        "type": "paragraph",
+        "content": [
+          { "type": "text", "text": "Your text here" }
+        ]
+      }
+    ]
+  }
+- size: one of "s","m","l","xl"
+- color: named color from allowed list
+- autoSize: true
+
+### Note shapes
+props must include:
+- richText: same TipTap structure as above
+- color: named color
+- size: "s","m","l" or "xl"
+
+### Arrow shapes
+props must include:
+- startX: number
+- startY: number
+- endX: number
+- endY: number
+- color: named color
+
+Colors must be one of the allowed tokens. Do NOT use hex, rgb(), etc.
+
+Return ONLY the JSON with NO explanation.
+
+"""

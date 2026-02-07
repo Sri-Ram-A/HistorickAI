@@ -36,3 +36,5 @@ https://pypi.org/project/pgvector/
 CREATE EXTENSION vector;
 You should see:
     CREATE EXTENSION
+
+- https://tldraw.dev/releases/v2.0.0

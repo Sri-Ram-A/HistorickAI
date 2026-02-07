@@ -10,16 +10,36 @@ from transformers import AutoTokenizer
 from sentence_transformers import SentenceTransformer
 from loguru import logger
 from tqdm import tqdm
+from pathlib import Path
 
-# Config
-SUPPORTED_EXTENSIONS = {'.pdf', '.docx', '.txt', '.pptx'}
+HF_PATH = Path("hf_models")
+SUPPORTED_EXTENSIONS = {".pdf", ".docx", ".txt", ".pptx"}
 EMBED_MODEL_ID = "sentence-transformers/all-MiniLM-L6-v2"
 MAX_TOKENS = 384
-tokenizer = HuggingFaceTokenizer(
-    tokenizer=AutoTokenizer.from_pretrained(EMBED_MODEL_ID),
-    max_tokens=MAX_TOKENS
-)
-embedding_model = SentenceTransformer(EMBED_MODEL_ID)
+
+def load_or_download_model():
+    """
+    Load tokenizer + embedding model locally if available.
+    Otherwise download once and cache.
+    """
+    if HF_PATH.exists() and any(HF_PATH.iterdir()):
+        logger.info(f"Loading models from local cache → {HF_PATH}")
+        tokenizer = AutoTokenizer.from_pretrained(str(HF_PATH))
+        embedding_model = SentenceTransformer(str(HF_PATH))
+    else:
+        logger.warning("Local model not found. Downloading from HuggingFace hub...")
+
+        tokenizer = AutoTokenizer.from_pretrained(EMBED_MODEL_ID,model_max_length=MAX_TOKENS)
+        embedding_model = SentenceTransformer(EMBED_MODEL_ID)
+        HF_PATH.mkdir(parents=True, exist_ok=True)
+        logger.info(f"Saving models locally → {HF_PATH}")
+        tokenizer.save_pretrained(str(HF_PATH))
+        embedding_model.save_pretrained(str(HF_PATH))
+
+    logger.info("Models ready")
+    return tokenizer, embedding_model
+
+tokenizer, embedding_model = load_or_download_model()
 document_converter = DocumentConverter()
 hybrid_chunker = HybridChunker(tokenizer=tokenizer,merge_peers=True,max_tokens=MAX_TOKENS)   # type: ignore
 logger.info("Loaded Tokenizer and Embeddings Transformer")
