@@ -1,12 +1,10 @@
 "use client";
 
-import BlobBackground from "@/components/reusables/blob-background";
 
 export default function Home() {
   return (
     <div className="relative min-h-screen overflow-hidden">
       {/* Animated background */}
-      <BlobBackground interactive={true} intensity="medium" />
 
       {/* Main content */}
       <main className="relative z-10 container mx-auto px-4 m-6">

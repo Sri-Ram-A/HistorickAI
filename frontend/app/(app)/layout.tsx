@@ -1,7 +1,7 @@
 "use client"
 
 import React from "react"
-import { AppSidebar } from "@/components/reusables/app-sidebar"
+import { AppSidebar } from "@/components/app-sidebar"
 import { Toaster } from "@/components/ui/sonner"
 
 import {

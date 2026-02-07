@@ -11,8 +11,9 @@ import {
   FieldGroup,
   FieldSeparator,
 } from "@/components/ui/field"
-import { REQUEST } from "@/routes" 
+import { REQUEST } from "@/routes"
 import * as types from "@/types"
+import { useFiles } from "@/contexts/FileContext";
 
 
 function validateLogin(values: types.LoginFormValues) {
@@ -28,7 +29,7 @@ export default function LoginPage() {
   const [errors, setErrors] = useState<Partial<types.LoginFormValues>>({})
   const [serverError, setServerError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
-
+  const { refresh } = useFiles()
   const onChange = (k: keyof types.LoginFormValues, v: string) => {
     setValues((s) => ({ ...s, [k]: v }))
     setErrors((e) => ({ ...e, [k]: undefined }))
@@ -50,7 +51,7 @@ export default function LoginPage() {
       // store tokens
       if (data.access) localStorage.setItem("access", data.access)
       if (data.refresh) localStorage.setItem("refresh", data.refresh)
-
+      await refresh() // prefetch folders on login
       router.push("/home")
     } catch (err: any) {
       setServerError(err?.message || "Login failed")

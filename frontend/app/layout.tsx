@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "@/components/ui/sonner"
+import { FileProvider } from "@/contexts/FileContext";
 
 import "./globals.css";
 
@@ -36,8 +37,10 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          {children}
-          <Toaster richColors/>
+          <FileProvider>
+            {children}
+            <Toaster richColors />
+          </FileProvider>
         </ThemeProvider>
       </body>
     </html>

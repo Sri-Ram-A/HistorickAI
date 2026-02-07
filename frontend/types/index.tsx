@@ -20,15 +20,15 @@ export interface AuthResponse {
 export interface FileT {
   id: string;
   name: string;
-  file: string;
-  uploaded_at: string; 
+  file?: string;
+  uploaded_at?: string; 
 }
 export interface FolderT {
   id: string;
   name: string;
-  parent: string | null;
   children: FolderT[];
-  files: FileT[];
+  files?: FileT[];
+  parent?: string | null;
   created_at: string; // ISO date string
 }
 
