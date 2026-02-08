@@ -12,8 +12,3 @@ class TimelineEntry(BaseModel):
     image_source: str
     alternative: str
     
-class Quiz(BaseModel):
-    question: str
-    options: list[str]
-    answer: str
-

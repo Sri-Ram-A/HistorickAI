@@ -6,8 +6,10 @@ import { useFiles } from "@/contexts/FileContext";
 import { Card, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { BookOpen, Folder, Sparkles, ArrowRight } from "lucide-react";
-
+import { BookOpen, Folder, Plus, ArrowRight } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 // Premium gradients with more sophisticated color combinations
 const gradients = [
   "from-violet-600 via-purple-600 to-indigo-700",
@@ -30,14 +32,20 @@ const cardOverlays = [
 
 export default function Home() {
   const router = useRouter();
-  const { folders, loading } = useFiles();
+  const { folders, loading, createFolder } = useFiles();
   const [username, setUsername] = useState("Scholar");
-
+  const [createOpen, setCreateOpen] = useState(false);
+  const [newFolderName, setNewFolderName] = useState("");
   useEffect(() => {
     const storedName = localStorage.getItem("username");
     if (storedName) setUsername(storedName);
   }, []);
-
+  const handleCreateFolder = async () => {
+    if (!newFolderName.trim()) return;
+    await createFolder(newFolderName, null);
+    setNewFolderName("");
+    setCreateOpen(false);
+  };
   return (
     <div className="min-h-screen relative overflow-hidden">
       {/* Background Image with proper overlay */}
@@ -105,7 +113,7 @@ export default function Home() {
 
                 {/* Main Card */}
                 <Card
-                  onClick={() => router.push(`/learn/${folder.id}`)}
+                  onClick={() => router.push(`/${folder.id}`)}
                   className="relative h-56 border-none cursor-pointer transition-all duration-500 overflow-hidden group-hover:scale-[1.02] bg-slate-800/60 backdrop-blur-xl"
                 >
                   {/* Animated gradient overlay */}
@@ -156,15 +164,42 @@ export default function Home() {
             ))
           ) : (
             <div className="col-span-full flex flex-col items-center justify-center py-20 space-y-4">
-              <div className="p-6 rounded-2xl bg-linear-to-br from-slate-800/60 to-slate-900/60 backdrop-blur-xl border border-white/10">
-                <BookOpen className="w-16 h-16 text-slate-400" />
+              <div className="p-6 rounded-2xl bg-linear-to-br from-slate-800/60 to-slate-900/60 backdrop-blur-xl border border-white/10 flex justify-center items-center">
+                <div className="relative">
+                  <BookOpen
+                    className="w-16 h-16 text-slate-400 cursor-pointer"
+                    onClick={() => setCreateOpen(true)}
+                  />
+                  <Plus className="absolute -top-2 -right-2 w-5 h-5 bg-indigo-500 rounded-full p-1 text-white shadow-lg" />
+                </div>
               </div>
+
               <p className="text-slate-300 text-lg font-medium">
                 No notebooks found. Create your first one to get started!
               </p>
               <p className="text-slate-500 text-sm">
-                Begin your journey through history today ✨
+                Begin your journey through history today 
               </p>
+              <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Create new folder</DialogTitle>
+                  </DialogHeader>
+                  <Input
+                    value={newFolderName}
+                    onChange={(e) => setNewFolderName(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && handleCreateFolder()}
+                    placeholder="Folder name"
+                    autoFocus
+                  />
+                  <div className="flex justify-end gap-2">
+                    <Button variant="outline" onClick={() => setCreateOpen(false)}>
+                      Cancel
+                    </Button>
+                    <Button onClick={handleCreateFolder}>Create</Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
             </div>
           )}
         </div>

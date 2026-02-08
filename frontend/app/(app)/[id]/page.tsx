@@ -25,7 +25,7 @@ export default function LearnPage() {
 
       <div className="main z-10 relative">
 
-        <Button variant="default" onClick={() => router.push("/quiz")}>Attend A Quiz</Button>
+        <Button variant="default" onClick={() => router.push(`/${params.id}/quiz`)}>Attend A Quiz</Button>
       </div>
 
     </div>

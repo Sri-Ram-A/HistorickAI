@@ -14,7 +14,7 @@ API_KEY=os.getenv("GROQ_API_KEY")
 logger.success("Loaded API KEY succesfully✨")
 client = Groq(api_key=API_KEY)
 
-def generate(schema=None,system_instruction="No system instruction provided",contents="No query provided "):
+def generate(schema=None,system_instruction="No system instruction provided",query="No query provided "):
     completion = client.chat.completions.create(
         model="openai/gpt-oss-120b",
         messages=[
@@ -24,7 +24,7 @@ def generate(schema=None,system_instruction="No system instruction provided",con
         },
         {
             "role": "user",
-            "content": f"Strictly generate the json output in the given format : {schema} on the topic : {contents}"
+            "content": f"Strictly generate the json output in the given format : {schema} on the topic : {query}"
         }
         ],
         temperature=1,

@@ -31,7 +31,7 @@ export function AppSidebar(props: React.ComponentProps<typeof Sidebar>) {
     <Sidebar {...props} className="border-r">
       <SidebarHeader className="border-b px-6 py-4">
         <div className="flex items-center gap-2">
-          <Sparkles className="h-5 w-5 text-primary" />
+          <span className="bg-black text-white dark:bg-white rounded dark:text-black font-semibold px-1">HI</span>
           <span className="font-semibold text-lg">Historick AI</span>
         </div>
       </SidebarHeader>

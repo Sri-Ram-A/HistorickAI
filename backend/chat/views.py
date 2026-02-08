@@ -9,8 +9,9 @@ from pydantic import ValidationError
 
 from folders.models import Folder, Chunk
 from folders.signals import embedding_model
-from . import model,schemas,system_instructions,serializers,tldraw
+from . import model,system_instructions,serializers,schemas
 import json
+
 from loguru import logger
 # Create your views here.
 TOP_K = 5
@@ -41,31 +42,40 @@ class RetrieveChunksView(APIView):
             "count": len(results),
             "results": results
         }, status=status.HTTP_200_OK)
-@extend_schema(tags=["Chat"])
+# chat/views.py
+
 class CreateQuizAPIView(APIView):
     serializer_class = serializers.QuizRequestSerializer
+
     def post(self, request):
-        # Validate request
-        req_serializer = self.serializer_class(data=request.data)
-        if not req_serializer.is_valid():
-            return Response(req_serializer.errors,status=status.HTTP_400_BAD_REQUEST)
-        topic = req_serializer.validated_data["topic"]
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        payload = serializer.validated_data
+        quiz_type = payload.get("type", "basic")
+
+        if quiz_type == "basic":
+            schema = list[schemas.quiz.BasicQuiz] 
+            system_instruction = system_instructions.quiz_instruction
+            llm_input = f"Generate a quiz on {payload.get("topic") or payload.get("query", "")} with a total number of questions : {payload.get("num_questions")}. Make sure to set the quiz with a {payload.get("difficulty")} difficulty level. Ensure that the quiz is solved within {payload.get("time_limit")} minutes"
+        else:
+            schema = list[schemas.quiz.Question] 
+            system_instruction = system_instructions.unified_quiz_instruction
+            llm_input = payload.get("query",None)
+
         try:
-            # Call model
-            response = model.generate(list[schemas.Quiz],system_instructions.quiz_instruction,topic)
-            # Model returns JSON string
-            if response : 
-                parsed = json.loads(response)
-                logger.success("Quiz generated ")
-                # Validate response
-                res_serializer = serializers.QuizResponseSerializer(data={"quizzes": parsed})
-                res_serializer.is_valid(raise_exception=True)
-                return Response(res_serializer.data,status=status.HTTP_200_OK)
-            logger.error("Quiz generation failed")
-            return Response({"error": "Quiz generation failed"},status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            raw_response = model.generate(schema, system_instruction, str(llm_input))
+            if not raw_response:
+                logger.error("Empty model response")
+                return Response({"error": "Quiz generation failed"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            parsed = json.loads(raw_response)
+            # Basic validation of response shape
+            resp_serializer = serializers.QuizResponseSerializer(data={"title": f"{payload.get('topic','Assessment')} Assessment", "questions": parsed})
+            resp_serializer.is_valid(raise_exception=True)
+            return Response(resp_serializer.data, status=status.HTTP_200_OK)
+
         except Exception as e:
             logger.exception("Quiz generation failed")
-            return Response({"error": str(e)},status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @extend_schema(tags=["Chat"])
 class CreateTimelineAPIView(APIView):
@@ -79,7 +89,7 @@ class CreateTimelineAPIView(APIView):
         query = req_serializer.validated_data["message"]
         try:
             # Call model
-            response = model.generate(list[schemas.TimelineEntry],system_instructions.timeline_instruction,query)
+            response = model.generate(list[schemas.timeline.TimelineEntry],system_instructions.timeline_instruction,query)
             parsed = json.loads(response)
             logger.info("Timeline generated ❤️")
             # Validate response
@@ -100,7 +110,6 @@ class CreateTimelineAPIView(APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
-
 @extend_schema(tags=["Chat"])
 class CreateDiagramAPIView(APIView):
     def post(self, request):
@@ -111,14 +120,14 @@ class CreateDiagramAPIView(APIView):
         try:
             # Call model (strict schema ask)
             response_str = model.generate(
-                schema=tldraw.TldrawDiagram,
+                schema=schemas.tldraw.TldrawDiagram,
                 system_instruction=system_instructions.tldraw_instruction,
-                contents=topic,
+                query=topic,
             )
             # Parse JSON
             parsed = json.loads(response_str)
             # Validate with Pydantic
-            diagram_obj = tldraw.TldrawDiagram.model_validate(parsed)
+            diagram_obj = schemas.tldraw.TldrawDiagram.model_validate(parsed)
             return Response(diagram_obj.model_dump(), status=status.HTTP_200_OK)
 
         except ValidationError as e:

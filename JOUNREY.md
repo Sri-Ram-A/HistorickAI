@@ -4,8 +4,8 @@
 }
 eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzcwMTI0OTA1LCJpYXQiOjE3NzAxMjEzMDUsImp0aSI6ImZjZGM5N2U1OWNlNjQ3Y2RhZmI1M2ExNzJiMWQyYjI5IiwidXNlcl9pZCI6IjEifQ.WH22ZvJmeChGJHRNJDyCcgdvXnu8zty3yvKjwUFfKTo
 [$ docker run --name historickAI-postgres -e POSTGRES_PASSWORD=SriRam.A@369 -d postgres](https://medium.com/@adarsh.ajay/setting-up-postgresql-with-pgvector-in-docker-a-step-by-step-guide-d4203f6456bd)
-docker pull ankane/pgvector
 
+docker pull ankane/pgvector
 
 docker run -e POSTGRES_USER=Sriram.A \
            -e POSTGRES_PASSWORD=Sriram.A@369 \

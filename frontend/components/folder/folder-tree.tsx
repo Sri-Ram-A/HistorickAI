@@ -115,7 +115,7 @@ export function File({
 
             {/* Preview Modal */}
             <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
-                <DialogContent className="max-w-4xl w-[90vw] p-0 overflow-hidden bg-black/5 backdrop-blur-xl border-white/20 shadow-2xl">
+                <DialogContent className="w-full p-0 overflow-hidden  backdrop-blur-xl border-white/20 shadow-2xl">
                     <AnimatePresence mode="wait">
                         <motion.div
                             initial={{ opacity: 0, scale: 0.95, y: 20 }}
