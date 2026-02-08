@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import { REQUEST } from "@/routes";
 import { TimelineEntry } from "@/types";
-import  {Timeline}  from "@/components/timeline";
+import { Timeline } from "@/components/timeline";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,14 +13,14 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 
 // Icons
-import { 
-  Search, 
-  Sparkles, 
-  Clock, 
-  ArrowRight, 
-  Loader2, 
+import {
+  Search,
+  Sparkles,
+  Clock,
+  ArrowRight,
+  Loader2,
   RefreshCcw,
-  History 
+  History
 } from "lucide-react";
 
 export default function TimelinePage() {
@@ -38,7 +38,7 @@ export default function TimelinePage() {
     try {
       // Using your custom REQUEST utility
       const data = await REQUEST("POST", "chat/generate_timeline/", { message: userQuery });
-      
+
       const formattedData = data.response.map((item: any) => ({
         title: item.title,
         content: (
@@ -62,7 +62,7 @@ export default function TimelinePage() {
 
             {/* Visual Section */}
             <div className="relative aspect-video w-full overflow-hidden rounded-2xl border border-white/10 shadow-2xl">
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent z-10" />
+              <div className="absolute inset-0 bg-linear-to-t from-black/60 via-transparent to-transparent z-10" />
               <Image
                 src={item.image_source}
                 alt={item.alternative || "Historical visualization"}
@@ -89,67 +89,63 @@ export default function TimelinePage() {
   };
 
   return (
-    <div className="relative min-h-screen bg-neutral-950 text-white selection:bg-purple-500/30">
-      {/* Cinematic Background Overlay */}
-      <div 
-        className="fixed inset-0 z-0 opacity-20"
-        style={{
-          backgroundImage: `url('/backgrounds/timelineBackground.jpeg')`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          filter: 'grayscale(100%) brightness(0.5)'
-        }}
-      />
-      <div className="fixed inset-0 z-0 bg-gradient-to-b from-neutral-950 via-neutral-950/80 to-neutral-950" />
+    <div className="relative min-h-screen bg-white text-white selection:bg-purple-500/30 dark:bg-neutral-950">
 
       <main className="relative z-10 flex flex-col items-center">
-        
+
         {/* State 1: Search Header */}
-        <div className={cn(
-          "w-full max-w-4xl px-6 transition-all duration-1000 ease-in-out",
-          isGenerated ? "pt-12 pb-8" : "pt-[30vh]"
-        )}>
           <AnimatePresence mode="wait">
             {!isGenerated ? (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                className="text-center space-y-8"
-              >
-                <div className="space-y-4">
-                  <Badge className="bg-white/10 text-white hover:bg-white/20 border-white/10 px-4 py-1">
-                    <Sparkles className="w-3 h-3 mr-2 text-purple-400" />
-                    AI-Powered Chronology
-                  </Badge>
-                  <h1 className="text-6xl md:text-8xl font-black tracking-tighter bg-gradient-to-b from-white to-white/40 bg-clip-text text-transparent">
-                    The Archive.
-                  </h1>
-                  <p className="text-neutral-500 text-lg md:text-xl max-w-xl mx-auto font-medium">
-                    Enter a subject to reconstruct its journey through time with photographic precision.
-                  </p>
+              <div className="parent relative w-full min-h-screen">
+
+                <div className="background absolute inset-0 z-0">
+                  <img src="/images/timeline.png" alt="Timeline background" className="h-full w-full object-contain brightness-75" />
                 </div>
 
-                <div className="relative max-w-2xl mx-auto">
-                  <Input
-                    placeholder="e.g. The Renaissance, SpaceX, or Ancient Rome..."
-                    value={userQuery}
-                    onChange={(e) => setUserQuery(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && handleGenerate()}
-                    className="h-16 pl-6 pr-40 bg-white/5 border-white/10 rounded-2xl text-xl backdrop-blur-2xl focus-visible:ring-purple-500/50"
-                  />
-                  <Button 
-                    onClick={handleGenerate}
-                    disabled={loading || !userQuery}
-                    className="absolute right-2 top-2 h-12 px-6 bg-white text-black hover:bg-neutral-200 rounded-xl font-bold transition-transform active:scale-95"
-                  >
-                    {loading ? <Loader2 className="animate-spin w-5 h-5" /> : "Generate"}
-                  </Button>
-                </div>
-              </motion.div>
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  className="text-center space-y-8 relative z-10"
+                >
+
+                  <div className="space-y-4">
+                    <Badge className="bg-white/10 text-white hover:bg-white/20 border-white/10 px-4 py-1">
+                      <Sparkles className="w-3 h-3 mr-2 text-purple-400" />
+                      AI-Powered Chronology
+                    </Badge>
+                    <h1 className="text-6xl md:text-8xl font-black tracking-tighter bg-linear-to-b dark:from-white dark:to-white/40 bg-clip-text">
+                      It's Time
+                    </h1>
+                    <p className="text-neutral-500 text-lg md:text-xl max-w-xl mx-auto font-medium dark:text-neutral-300">
+                      To enter a <span className="bg-red-400 p-1 rounded text-white">subject
+                      </span> to reconstruct its <span className="bg-purple-500 text-white p-1 rounded">
+                        journey</span> through time with <span className="p-0.5 bg-green-400 text-white">
+                        photographic</span> precision.
+                    </p>
+                  </div>
+
+                  <div className="relative max-w-2xl mx-auto">
+                    <Input
+                      placeholder="e.g. The Renaissance, SpaceX, or Ancient Rome..."
+                      value={userQuery}
+                      onChange={(e) => setUserQuery(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && handleGenerate()}
+                      className="h-16 pl-6 pr-40 bg-white/5 border-white/10 rounded-2xl text-xl backdrop-blur-2xl focus-visible:ring-purple-500/50 dark:text-neutral-300"
+                    />
+                    <Button
+                      onClick={handleGenerate}
+                      disabled={loading || !userQuery}
+                      className="absolute right-2 top-2 h-12 px-6 bg-white text-black hover:bg-neutral-200 rounded-xl font-bold transition-transform active:scale-95"
+                    >
+                      {loading ? <Loader2 className="animate-spin w-5 h-5" /> : "Generate"}
+                    </Button>
+                  </div>
+                </motion.div>
+              </div>
             ) : (
-              <motion.div 
-                initial={{ opacity: 0 }} 
+              <motion.div
+                initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 className="flex flex-col md:flex-row items-center justify-between gap-6 border-b border-white/10 pb-8"
               >
@@ -160,8 +156,8 @@ export default function TimelinePage() {
                   </div>
                   <h2 className="text-4xl font-bold capitalize tracking-tight">{userQuery}</h2>
                 </div>
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   onClick={() => { setTimelineData([]); setIsGenerated(false); }}
                   className="rounded-full bg-white/5 border-white/10 hover:bg-white/10 group"
                 >
@@ -171,7 +167,6 @@ export default function TimelinePage() {
               </motion.div>
             )}
           </AnimatePresence>
-        </div>
 
         {/* State 2: Loading Overlay */}
         {loading && !isGenerated && (

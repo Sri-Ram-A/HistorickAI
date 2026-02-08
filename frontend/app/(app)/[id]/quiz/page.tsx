@@ -11,7 +11,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, } from "@/components/ui/dialog";
 import { useFolders } from "@/hooks/useFolders";
-
+import {cn} from "@/lib/utils";
 type QuizType = "basic" | "advanced" | "question-bank";
 
 const BLOOMS_LEVELS = [
@@ -29,19 +29,19 @@ const quizCards = [
     type: "basic" as QuizType,
     title: "Basic Quiz",
     description: "Fast AI-generated multiple choice questions perfect for quick assessments and practice sessions",
-    image: "/images/basic.png",
+    image: "/images/quiz/basic.jpg",
   },
   {
     type: "advanced" as QuizType,
     title: "Advanced Assessment",
     description: "Comprehensive mixed-format questions with detailed reasoning, rubrics, and higher-order thinking challenges",
-    image: "/images/advanced.png",
+    image: "/images/quiz/advanced.jpg",
   },
   {
     type: "question-bank" as QuizType,
     title: "Question Bank",
     description: "RAG-powered questions generated from your stored papers, documents, and custom knowledge sources",
-    image: "/images/qbank.png",
+    image: "/images/quiz/question-bank.jpg",
   },
 ];
 

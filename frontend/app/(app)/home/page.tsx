@@ -72,9 +72,10 @@ export default function Home() {
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,var(--tw-gradient-stops))] from-blue-500/10 via-transparent to-transparent opacity-0 dark:opacity-100" />
       </div>
 
-      <div className="relative z-10 p-8 max-w-7xl mx-auto">
+      <div className="relative z-10 p-2 max-w-7xl mx-auto ">
+
         {/* Header Section with enhanced styling */}
-        <div className="mb-12 space-y-4">
+        <div className="mb-4 space-y-4">
           <div className="space-y-2">
             <h2 className="text-3xl font-semibold text-white flex items-center gap-2">
               Welcome back,{" "}
@@ -89,7 +90,7 @@ export default function Home() {
         </div>
 
         {/* Folders Grid with enhanced cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 overflow-hidden">
           {loading ? (
             // Enhanced Loading State
             Array(6)
@@ -171,13 +172,14 @@ export default function Home() {
                     onClick={() => setCreateOpen(true)}
                   />
                   <Plus className="absolute -top-2 -right-2 w-5 h-5 bg-indigo-500 rounded-full p-1 text-white shadow-lg" />
+                  <img src="/images/home.png" className="h-75 w-75"/>
                 </div>
               </div>
 
               <p className="text-slate-300 text-lg font-medium">
                 No notebooks found. Create your first one to get started!
               </p>
-              <p className="text-slate-500 text-sm">
+              <p className="text-slate-400 text-sm">
                 Begin your journey through history today 
               </p>
               <Dialog open={createOpen} onOpenChange={setCreateOpen}>
@@ -203,6 +205,7 @@ export default function Home() {
             </div>
           )}
         </div>
+
       </div>
     </div>
   );
