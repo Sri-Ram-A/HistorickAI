@@ -157,4 +157,4 @@ SIMPLE_JWT = {
     'SLIDING_TOKEN_LIFETIME_LATE_USER': timedelta(days=30),
 }
 CORS_ALLOW_ALL_ORIGINS = True
-X_FRAME_OPTIONS = "ALLOWALL"
+X_FRAME_OPTIONS = "ALLOWALL" ### So that frontend can use IFrame to show PDFs
