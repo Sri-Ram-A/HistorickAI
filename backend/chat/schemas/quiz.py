@@ -39,3 +39,14 @@ class LongAnswer(BaseQuestion):
 
 Question = Union[MCQ,FillBlank,ShortAnswer,LongAnswer]
 
+class QuestionFeedback(BaseModel):
+    question_id: str
+    marks_obtained: float
+    max_marks: int
+    feedback: str
+    correct: bool | None = None  # For objective questions
+
+class EvaluationResult(BaseModel):
+    obtained_marks: float
+    feedback: List[QuestionFeedback]
+    

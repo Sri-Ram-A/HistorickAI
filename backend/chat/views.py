@@ -42,40 +42,6 @@ class RetrieveChunksView(APIView):
             "count": len(results),
             "results": results
         }, status=status.HTTP_200_OK)
-# chat/views.py
-
-class CreateQuizAPIView(APIView):
-    serializer_class = serializers.QuizRequestSerializer
-
-    def post(self, request):
-        serializer = self.serializer_class(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        payload = serializer.validated_data
-        quiz_type = payload.get("type", "basic")
-
-        if quiz_type == "basic":
-            schema = list[schemas.quiz.BasicQuiz] 
-            system_instruction = system_instructions.quiz_instruction
-            llm_input = f"Generate a quiz on {payload.get("topic") or payload.get("query", "")} with a total number of questions : {payload.get("num_questions")}. Make sure to set the quiz with a {payload.get("difficulty")} difficulty level. Ensure that the quiz is solved within {payload.get("time_limit")} minutes"
-        else:
-            schema = list[schemas.quiz.Question] 
-            system_instruction = system_instructions.unified_quiz_instruction
-            llm_input = payload.get("query",None)
-
-        try:
-            raw_response = model.generate(schema, system_instruction, str(llm_input))
-            if not raw_response:
-                logger.error("Empty model response")
-                return Response({"error": "Quiz generation failed"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-            parsed = json.loads(raw_response)
-            # Basic validation of response shape
-            resp_serializer = serializers.QuizResponseSerializer(data={"title": f"{payload.get('topic','Assessment')} Assessment", "questions": parsed})
-            resp_serializer.is_valid(raise_exception=True)
-            return Response(resp_serializer.data, status=status.HTTP_200_OK)
-
-        except Exception as e:
-            logger.exception("Quiz generation failed")
-            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 @extend_schema(tags=["Chat"])
 class CreateTimelineAPIView(APIView):
@@ -138,3 +104,152 @@ class CreateDiagramAPIView(APIView):
             logger.exception("Diagram generation failed")
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         
+
+@extend_schema(tags=["Chat"])
+class CreateQuizAPIView(APIView):
+    serializer_class = serializers.QuizRequestSerializer
+
+    def post(self, request):
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        payload = serializer.validated_data
+        quiz_type = payload.get("type", "basic")
+        if quiz_type == "basic":
+            schema = list[schemas.quiz.BasicQuiz]
+            system_instruction = system_instructions.quiz_instruction
+            llm_input = (
+                f"Generate a quiz on {payload.get('topic') or payload.get('query', '')} "
+                f"with a total number of questions: {payload.get('num_questions')}. "
+                f"Make sure to set the quiz with a {payload.get('difficulty')} difficulty level. "
+                f"Ensure that the quiz is solved within {payload.get('time_limit')} minutes"
+            )
+        else:
+            # For advanced and question-bank
+            schema = list[schemas.quiz.Question]
+            system_instruction = system_instructions.unified_quiz_instruction
+            
+            # Build more detailed prompt for advanced quiz
+            llm_input_parts = []
+            if payload.get('topic'):
+                llm_input_parts.append(f"Topic: {payload.get('topic')}")
+            if payload.get('query'):
+                llm_input_parts.append(f"Query: {payload.get('query')}")
+            
+            llm_input_parts.append(f"Number of questions: {payload.get('num_questions')}")
+            
+            if payload.get('difficulty'):
+                llm_input_parts.append(f"Difficulty level: {payload.get('difficulty')}")
+            
+            if payload.get('blooms'):
+                llm_input_parts.append(f"Bloom's taxonomy levels: {', '.join(list(payload.get('blooms')))}")
+            
+            if payload.get('time_limit'):
+                llm_input_parts.append(f"Time limit: {payload.get('time_limit')} minutes")
+            
+            # Add source information
+            sources = payload.get('sources', {})
+            if sources.get('folders') or sources.get('files'):
+                llm_input_parts.append(
+                    f"Source folders: {sources.get('folders', [])}, "
+                    f"Source files: {sources.get('files', [])}"
+                )
+            
+            llm_input = "\n".join(llm_input_parts)
+
+        try:
+            raw_response = model.generate(schema, system_instruction, str(llm_input))
+            
+            if not raw_response:
+                logger.error("Empty model response")
+                return Response(
+                    {"error": "Quiz generation failed"},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
+            
+            parsed = json.loads(raw_response)
+            
+            # Basic validation of response shape
+            resp_serializer = serializers.QuizResponseSerializer(
+                data={
+                    "title": f"{payload.get('topic', 'Assessment')} Assessment",
+                    "questions": parsed
+                }
+            )
+            resp_serializer.is_valid(raise_exception=True)
+            
+            return Response(resp_serializer.data, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            logger.exception("Quiz generation failed")
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
+@extend_schema(tags=["Chat"])
+class EvaluateAnswersAPIView(APIView):
+    serializer_class = serializers.EvaluateAnswersRequestSerializer
+
+    def post(self, request):
+        """Evaluate user answers for advanced/question-bank quizzes"""
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        payload = serializer.validated_data
+
+        questions = payload.get('questions', [])
+        answers = payload.get('answers', {})
+        config = payload.get('config', {})
+
+        try:
+            # Build evaluation prompt
+            evaluation_data = {
+                'questions': questions,
+                'user_answers': answers,
+                'config': config
+            }
+
+            system_instruction = system_instructions.evaluation_instruction
+            llm_input = json.dumps(evaluation_data, indent=2)
+
+            # Call LLM for evaluation
+            raw_response = model.generate(
+                schema=schemas.quiz.EvaluationResult,
+                system_instruction=system_instruction,
+                query=llm_input
+            )
+
+            if not raw_response:
+                logger.error("Empty evaluation response")
+                return Response(
+                    {"error": "Evaluation failed"},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
+
+            evaluation_result = json.loads(raw_response)
+
+            # Calculate statistics
+            total_marks = sum(q.get('marks', 1) for q in questions)
+            obtained_marks = evaluation_result.get('obtained_marks', 0)
+            percentage = (obtained_marks / total_marks * 100) if total_marks > 0 else 0
+
+            response_data = {
+                'total_marks': total_marks,
+                'obtained_marks': obtained_marks,
+                'percentage': round(percentage, 2),
+                'feedback': evaluation_result.get('feedback', [])
+            }
+
+            resp_serializer = serializers.EvaluateAnswersResponseSerializer(
+                data=response_data
+            )
+            resp_serializer.is_valid(raise_exception=True)
+
+            return Response(resp_serializer.data, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            logger.exception("Answer evaluation failed")
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
