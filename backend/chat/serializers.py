@@ -68,3 +68,17 @@ class EvaluateAnswersResponseSerializer(serializers.Serializer):
     obtained_marks = serializers.FloatField()
     percentage = serializers.FloatField()
     feedback = serializers.ListField(child=serializers.DictField())
+
+class DiagramRequestSerializer(serializers.Serializer):
+    type = serializers.ChoiceField(choices=["flowchart","sequence","gantt","class","git","er","journey","quadrant","xy"],required=True,help_text="Type of diagram to generate")
+    query = serializers.CharField(max_length=2000,required=True,help_text="Description of the diagram to generate")
+
+    def validate_query(self, value):
+        if not value.strip():
+            raise serializers.ValidationError("Query cannot be empty")
+        return value.strip()
+
+
+class DiagramResponseSerializer(serializers.Serializer):
+    title = serializers.CharField(help_text="Title of the generated diagram")
+    code = serializers.CharField(help_text="Mermaid diagram code")

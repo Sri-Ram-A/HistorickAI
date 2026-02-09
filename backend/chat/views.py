@@ -253,3 +253,65 @@ class EvaluateAnswersAPIView(APIView):
                 {"error": str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+        
+
+@extend_schema(tags=["Chat"])
+class GenerateDiagramAPIView(APIView):
+    """
+    Generate Mermaid diagrams from natural language descriptions.
+    """
+    serializer_class = serializers.DiagramRequestSerializer
+
+    def post(self, request):
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        payload = serializer.validated_data
+
+        diagram_type = payload.get("type")
+        query = payload.get("query")
+
+        try:
+            # Build the LLM input
+            llm_input = f"""
+Diagram Type: {diagram_type}
+User Request: {query}
+
+Generate a {diagram_type} diagram that accurately represents this request.
+Ensure the Mermaid code is syntactically correct and will render properly.
+"""
+
+            # Call LLM with structured output
+            raw_response = model.generate(
+                schema=schemas.timeline.DiagramOutput,
+                system_instruction=system_instructions.mermaid_instruction,
+                query=llm_input
+            )
+
+            if not raw_response:
+                logger.error("Empty model response for diagram generation")
+                return Response(
+                    {"error": "Diagram generation failed"},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
+
+            # Parse the response
+            parsed = json.loads(raw_response)
+
+            # Validate response structure
+            resp_serializer = serializers.DiagramResponseSerializer(data=parsed)
+            resp_serializer.is_valid(raise_exception=True)
+
+            return Response(resp_serializer.data, status=status.HTTP_200_OK)
+
+        except json.JSONDecodeError as e:
+            logger.error(f"JSON decode error: {e}")
+            return Response(
+                {"error": "Invalid response format from model"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+        except Exception as e:
+            logger.exception("Diagram generation failed")
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )

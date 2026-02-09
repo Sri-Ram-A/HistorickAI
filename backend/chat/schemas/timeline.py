@@ -1,4 +1,4 @@
-from pydantic import BaseModel,RootModel
+from pydantic import BaseModel,Field
 from typing import List
 
 class Story(BaseModel):
@@ -12,3 +12,10 @@ class TimelineEntry(BaseModel):
     image_source: str
     alternative: str
     
+class DiagramOutput(BaseModel):
+    """
+    Output schema for diagram generation.
+    Contains the title and Mermaid code for rendering.
+    """
+    title: str = Field(description="A clear, descriptive title for the diagram")
+    code: str = Field(description="Valid Mermaid diagram code that can be rendered directly. Must follow Mermaid.js syntax exactly")
