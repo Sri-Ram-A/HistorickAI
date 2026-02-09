@@ -9,7 +9,7 @@ const API = {
   PATCH_FOLDER: (id: string) => `folder/update/folder/${id}/`,
   DELETE_FOLDER: (id: string) => `folder/delete/folder/${id}/`,
   GET_FOLDERS: "folder/view/folders/",
-  
+
   CREATE_FILE: "folder/create/file/",
   PATCH_FILE: (id: string) => `folder/update/file/${id}/`,
   DELETE_FILE: (id: string) => `folder/delete/file/${id}/`,
@@ -17,6 +17,10 @@ const API = {
 
 interface FileContextValue {
   folders: FolderT[];
+  selectedFile: FileT | null;
+  selectedFolder: FolderT | null;
+  setSelectedFile: (file: FileT | null) => void;
+  setSelectedFolder: (folder: FolderT | null) => void;
   loading: boolean;
   refresh: () => Promise<void>;
   createFolder: (name: string, parentId: string | null) => Promise<void>;
@@ -31,6 +35,8 @@ const FileContext = React.createContext<FileContextValue | undefined>(undefined)
 
 export function FileProvider({ children }: { children: React.ReactNode }) {
   const [folders, setFolders] = React.useState<FolderT[]>([]);
+  const [selectedFile, setSelectedFile] = React.useState<FileT | null>(null);
+  const [selectedFolder, setSelectedFolder] = React.useState<FolderT | null>(null);
   const [loading, setLoading] = React.useState(true);
 
   const refresh = React.useCallback(async () => {
@@ -55,7 +61,8 @@ export function FileProvider({ children }: { children: React.ReactNode }) {
     },
     [refresh]
   );
-  React.useEffect(()=>{refresh()},[])
+
+  React.useEffect(() => { refresh() }, [])
 
   const createFile = React.useCallback(
     async (file: File, folderId: string | null) => {
@@ -103,6 +110,8 @@ export function FileProvider({ children }: { children: React.ReactNode }) {
 
   const value: FileContextValue = {
     folders,
+    selectedFile, selectedFolder, 
+    setSelectedFile, setSelectedFolder,
     loading,
     refresh,
     createFolder,

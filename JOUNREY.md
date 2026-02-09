@@ -40,3 +40,4 @@ You should see:
 - https://tldraw.dev/releases/v2.0.0
 https://mermaid.js.org/intro/
 https://www.npmjs.com/package/@lightenna/react-mermaid-diagram
+# Now going to create session

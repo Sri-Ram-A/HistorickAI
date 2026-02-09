@@ -9,21 +9,29 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { FileUpload } from "@/components/ui/file-upload";
 import { EditableText } from "@/components/folder/editable-text";
-import { FileText, FileImage, Presentation, FileCode, File as FileIcon, FileType, ExternalLink, Folder as FolderIcon, Plus, UploadCloud, Trash2, Maximize2, Download,Video  } from "lucide-react";
-
+import {
+    FileText, FileImage, Presentation, FileCode, File as FileIcon, FileType, Edit3, ExternalLink, Folder as FolderIcon, Plus, UploadCloud, Trash2, Maximize2, Download, Video, Send, Paperclip
+} from "lucide-react";
+import {
+    Drawer,
+    DrawerContent,
+    DrawerHeader,
+    DrawerTitle,
+    DrawerDescription,
+} from "@/components/ui/drawer"
 import { motion, AnimatePresence } from "framer-motion";
 import { useFiles } from "@/contexts/FileContext";
 import { FileT, FolderT } from "@/types";
 import { BASE_URL } from "@/routes";
 
-const getFileMetadata = (fileUrl?: string) => {
+export const getFileMetadata = (fileUrl?: string) => {
     if (!fileUrl) return { url: "", type: "unknown", icon: FileIcon };
     // Clean URL construction
     const cleanBase = BASE_URL;
     const fullUrl = fileUrl.startsWith("http") ? fileUrl : `${cleanBase}${fileUrl}`;
     const ext = fileUrl.split('.').pop()?.toLowerCase();
     if (fileUrl.includes("youtube.com") || fileUrl.includes("youtu.be") || fileUrl.includes("you")) {
-        return { url: fullUrl, type: "youtube", icon: Video  };
+        return { url: fullUrl, type: "youtube", icon: Video };
     }
     switch (ext) {
         case "pdf": return { url: fullUrl, type: "pdf", icon: FileText };
@@ -36,7 +44,7 @@ const getFileMetadata = (fileUrl?: string) => {
 };
 
 // File Component
-export function File({
+function File({
     file,
     editingId,
     onStartEdit,
@@ -45,110 +53,80 @@ export function File({
     editingId: string | null;
     onStartEdit: (id: string) => void;
 }) {
-    const [isPreviewOpen, setIsPreviewOpen] = React.useState(false);
-    const { url, type, icon: Icon } = getFileMetadata(file.file);
+    const { setSelectedFile, selectedFile, deleteFile } = useFiles();
+    // Check if this specific file is the one currently active in the chat
+    const isActive = selectedFile?.id === file.id;
     const isEditing = editingId === file.id;
-
-    const renderPreviewContent = () => {
-        switch (type) {
-            case "image":
-                return <img src={url} alt={file.name} className="max-h-[70vh] w-auto mx-auto rounded-lg shadow-2xl" />;
-            case "pdf":
-                return <iframe src={`${url}#toolbar=0`} className="w-full h-[70vh] rounded-lg border" />;
-            case "youtube":
-                const videoId = url.split("v=")[1] || url.split("/").pop();
-                return (
-                    <iframe
-                        className="w-full aspect-video rounded-lg shadow-2xl"
-                        src={`https://www.youtube.com/embed/${videoId}`}
-                        allowFullScreen
-                    />
-                );
-            default:
-                return (
-                    <div className="flex flex-col items-center justify-center h-[40vh] bg-accent/20 rounded-xl border-2 border-dashed">
-                        <Icon className="h-16 w-16 text-muted-foreground mb-4" />
-                        <p className="text-muted-foreground">Preview not available for this file type</p>
-                        <Button variant="outline" className="mt-4" onClick={() => window.open(url, "_blank")}>
-                            <Download className="mr-2 h-4 w-4" /> Download File
-                        </Button>
-                    </div>
-                );
-        }
-    };
+    const { type, icon: Icon } = getFileMetadata(file.file);
+    const handleFileSelection = () => {setSelectedFile(file);};
 
     return (
-        <>
-            <ContextMenu>
-                <ContextMenuTrigger>
-                    <motion.div
-                        whileHover={{ x: 4 }}
-                        onClick={() => setIsPreviewOpen(true)}
-                        onKeyDown={(e) => {
-                            if (e.key === "F2" && !isEditing) onStartEdit(file.id);
-                            if (e.key === "Enter") setIsPreviewOpen(true);
-                        }}
-                        tabIndex={0}
-                        className="flex items-center gap-3 px-3 py-2 hover:bg-accent/50 rounded-xl transition-all cursor-pointer group"
-                    >
-                        <Icon className="h-4 w-4 text-blue-500" />
+        <ContextMenu>
+            <ContextMenuTrigger>
+                <motion.div
+                    whileHover={{ x: 2 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={handleFileSelection}
+                    onKeyDown={(e) => {
+                        if (e.key === "F2" && !isEditing) onStartEdit(file.id);
+                        if (e.key === "Enter") handleFileSelection();
+                    }}
+                    tabIndex={0}
+                    className={`
+                        group flex items-center gap-3 px-3 py-2.5 rounded-xl cursor-pointer transition-all outline-none
+                        ${isActive
+                            ? "bg-blue-500/10 text-blue-600 dark:bg-blue-500/20 shadow-sm"
+                            : "hover:bg-accent/60 text-muted-foreground hover:text-foreground"}
+                    `}
+                >
+                    {/* File Icon with Status Indicator */}
+                    <div className="relative">
+                        <Icon className={`h-4 w-4 ${isActive ? "text-blue-600" : "text-blue-500/70"}`} />
+                        {isActive && (
+                            <span className="absolute -top-1 -right-1 flex h-2 w-2">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
+                            </span>
+                        )}
+                    </div>
 
-                        <div className="flex-1 min-w-0">
-                            {/* Replace with your EditableText component */}
-                            <span className="text-sm font-medium truncate block">{file.name}</span>
-                            <span className="text-[10px] text-muted-foreground uppercase">{type}</span>
-                        </div>
+                    {/* File Info */}
+                    <div className="flex-1 min-w-0">
+                        <span className={`text-sm font-medium truncate block ${isActive ? "text-blue-700 dark:text-blue-400" : ""}`}>
+                            {file.name}
+                        </span>
+                        <span className="text-[10px] opacity-60 uppercase tracking-wider font-bold">
+                            {type}
+                        </span>
+                    </div>
 
-                        <Maximize2 className="h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-                    </motion.div>
-                </ContextMenuTrigger>
+                    {/* Quick Action Visual Cue */}
+                    <div className="flex items-center opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Maximize2 className="h-3 w-3" />
+                    </div>
+                </motion.div>
+            </ContextMenuTrigger>
 
-                <ContextMenuContent className="w-48">
-                    <ContextMenuItem onSelect={() => setIsPreviewOpen(true)}>Open Preview</ContextMenuItem>
-                    <ContextMenuItem onSelect={() => onStartEdit(file.id)}>Rename</ContextMenuItem>
-                    <ContextMenuSeparator />
-                    <ContextMenuItem className="text-destructive focus:text-destructive">
-                        <Trash2 className="h-4 w-4 mr-2" /> Delete
-                    </ContextMenuItem>
-                </ContextMenuContent>
-            </ContextMenu>
+            <ContextMenuContent className="w-52">
+                <ContextMenuItem onSelect={handleFileSelection} className="gap-2">
+                    <Maximize2 className="h-4 w-4" /> Open in Editor
+                </ContextMenuItem>
+                
+                <ContextMenuItem onSelect={() => onStartEdit(file.id)} className="gap-2">
+                    <Edit3 className="h-4 w-4" /> Rename
+                </ContextMenuItem>
 
-            {/* Preview Modal */}
-            <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
-                <DialogContent className="w-full p-0 overflow-hidden  backdrop-blur-xl border-white/20 shadow-2xl">
-                    <AnimatePresence mode="wait">
-                        <motion.div
-                            initial={{ opacity: 0, scale: 0.95, y: 20 }}
-                            animate={{ opacity: 1, scale: 1, y: 0 }}
-                            exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                            transition={{ duration: 0.2, ease: "easeOut" }}
-                            className="flex flex-col h-full"
-                        >
-                            <div className="p-6">
-                                <DialogHeader className="flex-row items-center justify-between space-y-0">
-                                    <div className="flex items-center gap-3">
-                                        <div className="p-2 bg-primary/10 rounded-lg">
-                                            <Icon className="h-5 w-5 text-primary" />
-                                        </div>
-                                        <div>
-                                            <DialogTitle className="text-lg font-semibold">{file.name}</DialogTitle>
-                                            <p className="text-xs text-muted-foreground">Uploaded at {file.uploaded_at ? new Date(file.uploaded_at).toLocaleDateString() : 'N/A'}</p>
-                                        </div>
-                                    </div>
-                                    <Button variant="ghost" size="icon" onClick={() => window.open(url, "_blank")}>
-                                        <ExternalLink className="h-4 w-4" />
-                                    </Button>
-                                </DialogHeader>
+                <ContextMenuSeparator />
 
-                                <div className="mt-6 rounded-xl overflow-hidden bg-white shadow-inner">
-                                    {renderPreviewContent()}
-                                </div>
-                            </div>
-                        </motion.div>
-                    </AnimatePresence>
-                </DialogContent>
-            </Dialog>
-        </>
+                <ContextMenuItem
+                    onSelect={() => deleteFile(file.id)}
+                    className="text-destructive focus:text-destructive gap-2"
+                >
+                    <Trash2 className="h-4 w-4" /> Delete File
+                </ContextMenuItem>
+            </ContextMenuContent>
+
+        </ContextMenu>
     );
 }
 
