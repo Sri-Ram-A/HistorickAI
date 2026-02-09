@@ -12,12 +12,12 @@ export default function ViewFile() {
     if (!selectedFile) {
         return (
             <div className="h-full flex flex-col items-center justify-center text-center p-8 bg-dot-black/[0.05]">
-                <div className="p-6 bg-blue-500/25 rounded-3xl mb-6 ring-1 ring-blue-500/20 shadow-inner">
+                <div className="p-6 bg-linear-to-t from-indigo-800 to-sky-300 rounded-3xl mb-6 ring-1 ring-blue-500/20 shadow-inner">
                     <img src="images/select-to-begin.png" className="h-100" />
                 </div>
                 <h2 className="text-2xl font-bold tracking-tight text-foreground/80">No Document Selected</h2>
                 <p className="text-muted-foreground max-w-75 mt-2">
-                    Pick a file from the sidebar to begin your AI-powered analysis.
+                    Pick a file from the sidebar to begin your AssIsted studies.
                 </p>
             </div>
         );

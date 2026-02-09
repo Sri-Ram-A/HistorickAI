@@ -12,13 +12,6 @@ import { EditableText } from "@/components/folder/editable-text";
 import {
     FileText, FileImage, Presentation, FileCode, File as FileIcon, FileType, Edit3, ExternalLink, Folder as FolderIcon, Plus, UploadCloud, Trash2, Maximize2, Download, Video, Send, Paperclip
 } from "lucide-react";
-import {
-    Drawer,
-    DrawerContent,
-    DrawerHeader,
-    DrawerTitle,
-    DrawerDescription,
-} from "@/components/ui/drawer"
 import { motion, AnimatePresence } from "framer-motion";
 import { useFiles } from "@/contexts/FileContext";
 import { FileT, FolderT } from "@/types";
@@ -48,17 +41,22 @@ function File({
     file,
     editingId,
     onStartEdit,
+    parentFolder
 }: {
     file: FileT;
     editingId: string | null;
     onStartEdit: (id: string) => void;
+    parentFolder: FolderT;
 }) {
-    const { setSelectedFile, selectedFile, deleteFile } = useFiles();
+    const { setSelectedFile, selectedFile, deleteFile,setSelectedFolder } = useFiles();
     // Check if this specific file is the one currently active in the chat
     const isActive = selectedFile?.id === file.id;
     const isEditing = editingId === file.id;
     const { type, icon: Icon } = getFileMetadata(file.file);
-    const handleFileSelection = () => {setSelectedFile(file);};
+    const handleFileSelection = () => {
+        setSelectedFolder(parentFolder); // ⭐ critical
+        setSelectedFile(file);
+    };
 
     return (
         <ContextMenu>
@@ -111,7 +109,7 @@ function File({
                 <ContextMenuItem onSelect={handleFileSelection} className="gap-2">
                     <Maximize2 className="h-4 w-4" /> Open in Editor
                 </ContextMenuItem>
-                
+
                 <ContextMenuItem onSelect={() => onStartEdit(file.id)} className="gap-2">
                     <Edit3 className="h-4 w-4" /> Rename
                 </ContextMenuItem>
@@ -201,6 +199,7 @@ function Folder({
                             key={file.id}
                             file={file}
                             editingId={editingId}
+                            parentFolder={folder}
                             onStartEdit={setEditingId}
                         />
                     ))}

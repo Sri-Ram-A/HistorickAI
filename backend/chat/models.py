@@ -1,3 +1,36 @@
+# chat/models.py
+import uuid
 from django.db import models
+from django.contrib.auth.models import User
+from django.db.models import Q, UniqueConstraint
+from folders.models import File,Folder
 
-# Create your models here.
+class Session(models.Model):
+    """
+    Chat session model that stores conversation history.
+    Each session is linked to a folder where the conversation is stored.
+    """
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    session_folder = models.ForeignKey(Folder,on_delete=models.CASCADE,related_name='sessions',help_text="Folder where this session's messages are stored")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    class Meta:
+        ordering = ['-updated_at']
+
+    def __str__(self):
+        return f"Session {self.id} - {self.session_folder.name}"
+
+class Message(models.Model):
+    """ Individual message in a chat session. Stores both user and AI messages. """
+    ROLE_CHOICES = [('user', 'User'),('assistant', 'Assistant')]
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    session = models.ForeignKey(Session,on_delete=models.CASCADE,related_name='messages')
+    role = models.CharField(max_length=10, choices=ROLE_CHOICES)
+    content = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['created_at']
+
+    def __str__(self):
+        return f"{self.role}: {self.content[:50]}..."

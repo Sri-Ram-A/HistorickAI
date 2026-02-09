@@ -69,13 +69,22 @@ export default function LearnPage() {
       color: "text-orange-500"
     },
     {
-      title: "Diagrams & Flowcharts",
-      description: "Build concept maps and flowcharts for better understanding",
-      route: `/${params.id}/chart`,
+      title: "Diagrams",
+      description: "Build beautiful visuals for better understanding",
+      route: `/${params.id}/draw`,
       image: "/images/animals/cat.png",
-      badge: { text: "Design", variant: "default", color: "bg-cyan-500" },
+      badge: { text: "Draw", variant: "default", color: "bg-cyan-500" },
       icon: Network,
       color: "text-cyan-500"
+    },
+    {
+      title: "Flowcharts",
+      description: "Build concept maps and flowcharts for better understanding",
+      route: `/${params.id}/chart`,
+      image: "/images/animals/bird.png",
+      badge: { text: "Design", variant: "default", color: "bg-red-500" },
+      icon: Network,
+      color: "text-red-500"
     },
     {
       title: "Scrapbook",
@@ -98,17 +107,7 @@ export default function LearnPage() {
   ]
 
   const handleCardClick = (route: string) => {
-    if (route === "chat") {
-      // Trigger sidebar (Ctrl+B)
-      const event = new KeyboardEvent('keydown', {
-        key: 'b',
-        ctrlKey: true,
-        bubbles: true
-      })
-      document.dispatchEvent(event)
-    } else {
-      router.push(route)
-    }
+    router.push(route)
   }
 
   // Replace your current JSX return structure with this:
@@ -159,7 +158,7 @@ export default function LearnPage() {
                       <img
                         src={feature.image}
                         alt={feature.title}
-                        className="h-full w-full object-cover rounded-xl transition-transform duration-500 group-hover:scale-110"
+                        className="h-full w-full object-fill rounded-xl transition-transform duration-500 group-hover:scale-110"
                       />
 
 
