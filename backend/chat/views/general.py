@@ -3,6 +3,7 @@ from datetime import datetime
 from loguru import logger
 from django.shortcuts import render
 from rest_framework.views import APIView
+from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework import status
 from django.shortcuts import get_object_or_404
@@ -14,11 +15,12 @@ from typing import cast, Dict, Any
 from folders.models import Folder, Chunk
 from folders.signals import embedding_model
 import chat.model as model
+import chat.models as models
 import chat.system_instructions as system_instructions
 import chat.serializers.general as serializers
 import chat.schemas as schemas
 from chat.models import Folder
-
+from chat.mixin import SessionResolverMixin
 # Create your views here.
 TOP_K = 5
 
@@ -78,7 +80,7 @@ class CreateTimelineAPIView(APIView):
         try:
             # Fetch model - Generate timeline using LLM
             response = model.generate(
-                list[schemas.timeline.TimelineEntry],
+                list[schemas.general.TimelineEntry],
                 system_instructions.timeline_instruction,
                 query
             )
@@ -146,70 +148,57 @@ class CreateDiagramAPIView(APIView):
             )
 
 
-@extend_schema(
+@extend_schema( # Done
     tags=["Create"],
     summary="Generate Mermaid diagrams from natural language",
     description="Creates various types of Mermaid diagrams (flowchart, sequence, class, etc.) from text descriptions.",
 )
-class GenerateDiagramAPIView(APIView):
+class CreateChartAPIView(SessionResolverMixin,APIView):
     serializer_class = serializers.DiagramRequestSerializer
 
-    def post(self, request):
+    def post(self, request:Request):
         # Validate request
-        serializer = self.serializer_class(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        validated = cast(Dict[str, Any], serializer.validated_data)
-
+        request_serializer = self.serializer_class(data=request.data)
+        request_serializer.is_valid(raise_exception=True)
+        request_validated = cast(Dict[str, Any], request_serializer.validated_data)
         # Retrieve required keys
-        diagram_type = validated.get("type")
-        query = validated.get("query")
+        diagram_type = request_validated.get("type")
+        query = request_validated.get("query")
+        # Available from Django Mixin
+        session = self.get_session(request) 
 
         try:
             # Build the LLM input
             llm_input = f"""
                 Diagram Type: {diagram_type}
                 User Request: {query}
-
                 Generate a {diagram_type} diagram that accurately represents this request.
                 Ensure the Mermaid code is syntactically correct and will render properly.
             """
-
             # Fetch model - Generate diagram using LLM
-            raw_response = model.generate(
-                schema=schemas.timeline.DiagramOutput,
+            raw_response : str = model.generate(
+                schema=schemas.general.DiagramOutput,
                 system_instruction=system_instructions.mermaid_instruction,
                 query=llm_input
             )
-
             if not raw_response:
                 logger.error("Empty model response for diagram generation")
-                return Response(
-                    {"error": "Diagram generation failed"},
-                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
-                )
-
+                return Response({"error": "Diagram generation failed"},status=status.HTTP_500_INTERNAL_SERVER_ERROR)
             # Parse the response
             parsed = json.loads(raw_response)
-
             # Validate response
-            resp_serializer = serializers.DiagramResponseSerializer(data=parsed)
-            resp_serializer.is_valid(raise_exception=True)
-
-            # Send response
-            return Response(resp_serializer.data, status=status.HTTP_200_OK)
-
-        except json.JSONDecodeError as e:
-            logger.error(f"JSON decode error: {e}")
-            return Response(
-                {"error": "Invalid response format from model"},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            diagram = schemas.general.DiagramOutput.model_validate_json(raw_response)
+            models.Flowchart.objects.create(
+                session=session,
+                query=query,
+                response=diagram.code,
+                type=diagram_type
             )
+            return Response(diagram.model_dump(), status=status.HTTP_200_OK)
+
         except Exception as e:
             logger.exception("Diagram generation failed")
-            return Response(
-                {"error": str(e)},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
+            return Response({"error": str(e)},status=status.HTTP_500_INTERNAL_SERVER_ERROR)
    
 
 @extend_schema(

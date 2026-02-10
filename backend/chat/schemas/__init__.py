@@ -1,3 +1,3 @@
 from . import quiz
-from . import timeline
+from . import general
 from . import tldraw

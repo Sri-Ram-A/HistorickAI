@@ -28,8 +28,7 @@ class StartSessionAPIView(APIView):
     """
     Start a new chat session.
     Creates or retrieves a session folder based on today's date,
-    then creates a session and stores the first message.
-    """
+    then creates a session and stores the first message."""
     # permission_classes = [IsAuthenticated]
     serializer_class = serializers.StartSessionRequestSerializer
 

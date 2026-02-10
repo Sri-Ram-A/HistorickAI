@@ -80,7 +80,7 @@ export default function LearnPage() {
     {
       title: "Flowcharts",
       description: "Build concept maps and flowcharts for better understanding",
-      route: `/${params.id}/chart`,
+      route: `/${params.id}/flowchart`,
       image: "/images/animals/bird.png",
       badge: { text: "Design", variant: "default", color: "bg-red-500" },
       icon: Network,
