@@ -23,15 +23,19 @@ class TimelineRequestSerializer(serializers.Serializer):
     
 
 # Flowchart Diagram Serializers
-class DiagramRequestSerializer(serializers.Serializer):
+class FlowchartRequestSerializer(serializers.Serializer):
     source_folder_id = serializers.UUIDField(required=True,help_text="ID of the source folder (parent folder) to start session ")
-    type = serializers.ChoiceField(choices=["flowchart","sequence","gantt","class","git","er","journey","quadrant","xy"],required=True,help_text="Type of diagram to generate")
-    query = serializers.CharField(max_length=2000,required=True,help_text="Description of the diagram to generate")
+    type = serializers.ChoiceField(choices=["flowchart","sequence","gantt","class","git","er","journey","quadrant","xy"],required=True,help_text="Type of chart to generate")
+    query = serializers.CharField(max_length=2000,required=True,help_text="Description of the chart to generate")
     
     def validate_query(self, value):
         if not value.strip():
             raise serializers.ValidationError("Query cannot be empty")
         return value.strip()
+
+class DiagramRequestSerializer(serializers.Serializer):
+    query = serializers.CharField(max_length=2000,required=True,help_text="Description of the diagram to generate")
+
 
 # Quiz Preparation Serializers
 class SourcesSerializer(serializers.Serializer):

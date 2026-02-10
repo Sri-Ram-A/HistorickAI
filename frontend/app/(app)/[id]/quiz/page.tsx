@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,7 +10,6 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, } from "@/components/ui/dialog";
 import { useFolders } from "@/hooks/useFolders";
-import {cn} from "@/lib/utils";
 type QuizType = "basic" | "advanced" | "question-bank";
 
 const BLOOMS_LEVELS = [
@@ -30,18 +28,21 @@ const quizCards = [
     title: "Basic Quiz",
     description: "Fast AI-generated multiple choice questions perfect for quick assessments and practice sessions",
     image: "/images/quiz/basic.jpg",
+    badge_colors : 'bg-purple-100 text-purple-800 hover:bg-purple-200 dark:bg-purple-900 dark:text-purple-200'
   },
   {
     type: "advanced" as QuizType,
     title: "Advanced Assessment",
     description: "Comprehensive mixed-format questions with detailed reasoning, rubrics, and higher-order thinking challenges",
     image: "/images/quiz/advanced.jpg",
+    badge_colors:'bg-blue-100 text-blue-800 hover:bg-blue-200 dark:bg-blue-900 dark:text-blue-200'
   },
   {
     type: "question-bank" as QuizType,
     title: "Question Bank",
     description: "RAG-powered questions generated from your stored papers, documents, and custom knowledge sources",
     image: "/images/quiz/question-bank.jpg",
+    badge_colors:'bg-emerald-100 text-emerald-800 hover:bg-emerald-200 dark:bg-emerald-900 dark:text-emerald-200'
   },
 ];
 
@@ -118,46 +119,40 @@ export default function QuizHome() {
   };
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
-      <div className="container mx-auto px-4 py-16 max-w-7xl">
+    <div className="min-h-screen  bg-linear-to-br from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
+      <div className="container mx-auto  px-4 py-16 max-w-7xl">
+
         {/* Header */}
-        <div className="text-center mb-16 space-y-4">
+        <header className="text-center mb-16 space-y-4">
           <h1 className="text-5xl font-bold tracking-tight bg-linear-to-r from-slate-900 to-slate-700 dark:from-white dark:to-slate-300 bg-clip-text text-transparent">
             Create Your Assessment
           </h1>
           <p className="text-lg text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
             Choose your assessment type and customize it to match your learning objectives
           </p>
-        </div>
+        </header>
 
         {/* Quiz Type Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
           {quizCards.map((card) => (
-            <Card
+            <div
               key={card.type}
               className="group relative overflow-hidden cursor-pointer transition-all duration-300 hover:shadow-xl border-slate-200 dark:border-slate-800 h-100 rounded-xl"
               onClick={() => toggleModal(card.type)}
             >
-              <CardContent className="w-full h-full p-0 relative">
+              <div className="w-full h-full p-0 relative">
                 <img
                   src={card.image}
                   alt={card.title}
                   className="absolute inset-0 rounded-xl w-full h-full object-cover transition-transform duration-700 group-hover:scale-101"
                 />
 
-                <div className="absolute inset-0 bg-black/10 group-hover:bg-black/30 transition-colors duration-300" />
-
                 <div className="relative z-10 h-full flex flex-col justify-between p-6">
 
                   <div className="flex justify-end">
                     <Badge
                       variant="secondary"
-                      className={`
-                        font-bold text-xs uppercase tracking-wider
-                        ${card.type === 'basic' ? 'bg-purple-100 text-purple-800 hover:bg-purple-200 dark:bg-purple-900 dark:text-purple-200' : ''}
-                        ${card.type === 'advanced' ? 'bg-blue-100 text-blue-800 hover:bg-blue-200 dark:bg-blue-900 dark:text-blue-200' : ''}
-                        ${card.type === 'question-bank' ? 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200 dark:bg-emerald-900 dark:text-emerald-200' : ''}
-                      `}>
+                      className={`font-bold text-xs uppercase tracking-wider ${card.badge_colors}`}>
                       {card.title}
                     </Badge>
                   </div>
@@ -169,8 +164,8 @@ export default function QuizHome() {
                   </div>
 
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           ))}
         </div>
 
@@ -351,6 +346,7 @@ export default function QuizHome() {
             </div>
           </DialogContent>
         </Dialog>
+
       </div>
     </div>
   );

@@ -3,7 +3,7 @@
 import { useState, useRef, useCallback } from "react"
 import { Tldraw, Editor, createShapeId, TLShapePartial } from "tldraw"
 import { motion, AnimatePresence } from "framer-motion"
-import { Sparkles, AlertCircle, XCircle, Loader2, ArrowRight } from "lucide-react"
+import { AlertCircle, XCircle, Loader2, ArrowRight } from "lucide-react"
 import "tldraw/tldraw.css"
 
 import { Input } from "@/components/ui/input"
@@ -54,14 +54,14 @@ function transformShapeForTldraw(shape: any): TLShapePartial | null {
    ------------------------- */
 
 export default function DiagramPage() {
-  const [topic, setTopic] = useState("")
+  const [query, setQuery] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const editorRef = useRef<Editor | null>(null)
 
   const generateDiagram = useCallback(async () => {
-    if (!topic.trim()) {
-      setError("Please provide a topic to visualize.")
+    if (!query.trim()) {
+      setError("Please provide a query to visualize.")
       return
     }
 
@@ -72,7 +72,7 @@ export default function DiagramPage() {
     setError(null) // Clear previous errors
 
     try {
-      const res = await REQUEST("POST", "chat/generate_diagram/", { topic })
+      const res = await REQUEST("POST", "chat/generate_diagram/", { query })
       if (!res || !Array.isArray(res.shapes)) {
         throw new Error("The AI returned an incompatible diagram format.")
       }
@@ -82,7 +82,7 @@ export default function DiagramPage() {
         .filter((s): s is TLShapePartial => Boolean(s))
 
       if (shapes.length === 0) {
-        throw new Error("The engine couldn't generate any valid shapes for this topic.")
+        throw new Error("The engine couldn't generate any valid shapes for this query.")
       }
 
       const existing = editor.getCurrentPageShapes()
@@ -99,87 +99,41 @@ export default function DiagramPage() {
     } finally {
       setLoading(false)
     }
-  }, [topic])
+  }, [query])
 
   return (
-    <div className="relative h-screen w-screen bg-[#fafafa] overflow-hidden">
-      {/* Canvas Area */}
-      <div className="absolute inset-0 z-0">
-        <Tldraw
-          onMount={(editor) => {
-            editorRef.current = editor
-          }}
-          autoFocus
-        />
-      </div>
+    <div className="relative flex h-screen w-screen flex-col overflow-hidden">
 
+      
       {/* Floating UI Overlay */}
-      <div className="absolute top-6 left-1/2 -translate-x-1/2 z-10 w-full max-w-2xl px-4">
-        <motion.div 
-          initial={{ y: -20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          className="flex flex-col gap-3"
-        >
-          {/* Main Input Card */}
-          <div className="bg-white/80 backdrop-blur-xl border border-white shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-2xl p-2 flex items-center gap-2 group transition-all focus-within:ring-2 focus-within:ring-primary/20">
-            <div className="pl-3 text-muted-foreground">
-              <Sparkles className="w-5 h-5 text-blue-500" />
-            </div>
-            <Input
-              placeholder="Describe a diagram (e.g. Microservices Architecture)"
-              className="border-none bg-transparent shadow-none focus-visible:ring-0 text-md h-12"
-              value={topic}
-              onChange={(e) => setTopic(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && generateDiagram()}
-            />
-            <Button 
-              onClick={generateDiagram} 
-              disabled={loading}
-              className="rounded-xl px-6 h-10 transition-all hover:scale-[1.02] active:scale-95"
-            >
-              {loading ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <div className="flex items-center gap-2">
-                  <span>Generate</span>
-                  <ArrowRight className="w-4 h-4" />
-                </div>
-              )}
-            </Button>
-          </div>
+      <div className="flex max-w-6xl p-2 shrink-0">
 
-          {/* Error Log Display */}
-          <AnimatePresence>
-            {error && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: "auto", opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                className="overflow-hidden"
-              >
-                <div className="bg-red-50 border border-red-100 rounded-xl p-3 flex items-start gap-3 shadow-sm">
-                  <AlertCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-red-800">Generation Error</p>
-                    <p className="text-xs text-red-600/80 leading-relaxed mt-0.5">{error}</p>
-                  </div>
-                  <button 
-                    onClick={() => setError(null)}
-                    className="text-red-400 hover:text-red-600 transition-colors"
-                  >
-                    <XCircle className="w-4 h-4" />
-                  </button>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </motion.div>
+        <Input
+          placeholder="Describe a diagram (e.g. Microservices Architecture)"
+          className="border-none bg-transparent shadow-none focus-visible:ring-0 text-md h-12"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && generateDiagram()}
+        />
+        <Button
+          onClick={generateDiagram}
+          disabled={loading}
+          className=" rounded-xl px-6 h-10 right-2 transition-all hover:scale-[1.02] active:scale-95"
+        >
+          {loading ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : (
+            <div className="flex items-center gap-2">
+              <span>Generate</span>
+              <ArrowRight className="w-4 h-4" />
+            </div>
+          )}
+        </Button>
       </div>
 
-      {/* Subtle Bottom Branding/Status */}
-      <div className="absolute bottom-6 left-6 z-10 flex items-center gap-3 text-xs font-medium text-muted-foreground bg-white/50 backdrop-blur-sm px-3 py-1.5 rounded-full border border-white/40">
-        <div className={`w-2 h-2 rounded-full ${loading ? 'bg-amber-400 animate-pulse' : 'bg-emerald-400'}`} />
-        {loading ? "AI is drawing..." : "Ready to design"}
+      {/* Canvas Area */}
+      <div className="flex-1 py-5">
+        <Tldraw autoFocus onMount={(editor) => {editorRef.current = editor}} />
       </div>
     </div>
   )

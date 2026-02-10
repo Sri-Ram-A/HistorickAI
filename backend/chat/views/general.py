@@ -25,7 +25,7 @@ from chat.helper import search_google_image
 # Create your views here.
 TOP_K = 5
 
-@extend_schema(
+@extend_schema( # Done
     tags=["Create"],
     summary="Retrieve relevant chunks from a folder using semantic search",
     description="Performs vector similarity search to find the most relevant document chunks based on the query.",
@@ -61,7 +61,7 @@ class RetrieveChunksView(APIView):
         )
 
 
-@extend_schema(
+@extend_schema( # Done
     tags=["Create"],
     summary="Generate a timeline from a query",
     description="Creates a structured timeline with events and dates based on the provided query content.",
@@ -118,8 +118,8 @@ class CreateTimelineAPIView(SessionResolverMixin, APIView):
 
 @extend_schema(
     tags=["Create"],
-    summary="Generate a TLDraw diagram from a topic",
-    description="Creates an interactive diagram representation using TLDraw format based on the specified topic.",
+    summary="Generate a TLDraw diagram from a query",
+    description="Creates an interactive diagram representation using TLDraw format based on the specified query.",
 )
 class CreateDiagramAPIView(APIView):
     serializer_class = serializers.DiagramRequestSerializer
@@ -131,14 +131,14 @@ class CreateDiagramAPIView(APIView):
         validated = cast(Dict[str, Any], serializer.validated_data)
 
         # Retrieve required keys
-        topic = validated["topic"]
+        query = validated["query"]
 
         try:
             # Fetch model - Generate diagram using LLM
             response_str = model.generate(
                 schema=schemas.tldraw.TldrawDiagram,
                 system_instruction=system_instructions.tldraw_instruction,
-                query=topic,
+                query=query,
             )
 
             # Parse and validate JSON
@@ -148,18 +148,9 @@ class CreateDiagramAPIView(APIView):
             # Send response
             return Response(diagram_obj.model_dump(), status=status.HTTP_200_OK)
 
-        except ValidationError as e:
-            logger.error(f"Invalid diagram JSON: {e}")
-            return Response(
-                {"error": "Invalid diagram format", "details": e.errors()},
-                status=status.HTTP_422_UNPROCESSABLE_ENTITY
-            )
         except Exception as e:
             logger.exception("Diagram generation failed")
-            return Response(
-                {"error": str(e)},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
+            return Response({"error": str(e)},status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @extend_schema( # Done
@@ -168,7 +159,7 @@ class CreateDiagramAPIView(APIView):
     description="Creates various types of Mermaid diagrams (flowchart, sequence, class, etc.) from text descriptions.",
 )
 class CreateChartAPIView(SessionResolverMixin,APIView):
-    serializer_class = serializers.DiagramRequestSerializer
+    serializer_class = serializers.FlowchartRequestSerializer
 
     def post(self, request:Request):
         # Validate request

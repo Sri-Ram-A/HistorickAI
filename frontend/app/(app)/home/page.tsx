@@ -52,13 +52,13 @@ export default function Home() {
       <div className="fixed inset-0 z-0">
         {/* Light Mode Image */}
         <img
-          src="/backgrounds/videoGenerationBackground.jpg"
+          src="/backgrounds/light-background.jpeg"
           alt="Light Background"
-          className="absolute inset-0 w-full h-full object-fill block dark:hidden"
+          className="absolute inset-0 w-full h-full object block dark:hidden"
         />
         {/* Dark Mode Image */}
         <img
-          src="/backgrounds/darkBackground.jpeg"
+          src="/backgrounds/dark-background.jpeg"
           alt="Dark Background"
           className="absolute inset-0 w-full h-full object-cover hidden dark:block"
         />

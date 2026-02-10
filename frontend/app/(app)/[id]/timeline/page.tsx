@@ -83,8 +83,7 @@ export default function TimelinePage() {
     <div className="relative min-h-screen bg-white dark:bg-[#020617] text-slate-900 dark:text-slate-50 overflow-x-hidden selection:bg-orange-500/30 transition-colors duration-300">
       {/* Space Background Effects - Subtle blurs that work on both themes */}
       <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-0 left-1/4 w-125 h-125 bg-indigo-500/10 dark:bg-indigo-600/10 blur-[120px] rounded-full opacity-50" />
-        <div className="absolute bottom-0 right-1/4 w-100 h-100 bg-rose-500/10 dark:bg-rose-600/10 blur-[120px] rounded-full opacity-30" />
+        <img src="/backgrounds/timeline.png" alt='Background Image'     className="absolute bottom-0 left-1/2 -translate-x-1/2" />
       </div>
 
       <main className="relative z-10 container mx-auto px-6">
@@ -95,12 +94,12 @@ export default function TimelinePage() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.98 }}
-              className="flex flex-col items-center justify-center min-h-screen text-center py-20"
+              className="flex flex-col items-center justify-center min-h-screen text-center"
             >
               {/* Badge: Adaptive border and background */}
               <Badge
                 variant="outline"
-                className="mb-8 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 px-4 py-1.5 bg-slate-50/50 dark:bg-slate-900/50 backdrop-blur-md"
+                className="mb-2 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 px-4 py-1.5 bg-slate-50/50 dark:bg-slate-900/50 backdrop-blur-md"
               >
                 <Sparkles className="w-3.5 h-3.5 mr-2 text-orange-500 dark:text-orange-400" />
                 Intelligence Protocol v2.0
@@ -108,7 +107,7 @@ export default function TimelinePage() {
 
               {/* Hero Text: Dual-theme linear mapping */}
               <h1 className="text-6xl md:text-8xl font-bold tracking-tighter mb-8 bg-clip-text text-transparent bg-linear-to-b from-slate-900 via-slate-800 to-slate-500 dark:from-white dark:via-white dark:to-slate-500">
-                It&apos;s Wolf Time <span className="text-slate-900 dark:text-white">Engine</span>
+                It&apos;s Time Travel Time
               </h1>
 
               {/* Input Group: Glassmorphism that lightens/darkens properly */}
@@ -116,14 +115,14 @@ export default function TimelinePage() {
                 {/* Glow Effect: Reduced opacity in light mode for professionalism */}
                 <div className="absolute -inset-1 bg-linear-to-r from-indigo-500 via-rose-500 to-orange-500 rounded-2xl blur opacity-15 dark:opacity-25 group-hover:opacity-30 dark:group-hover:opacity-40 transition duration-1000" />
 
-                <Card className="relative bg-white/80 dark:bg-slate-950 border-slate-200 dark:border-slate-800 p-1.5 rounded-2xl shadow-xl dark:shadow-none backdrop-blur-xl">
-                  <div className="flex flex-col sm:flex-row gap-2">
+                <Card className="relative bg-white/80 dark:bg-slate-950 border-slate-200 dark:border-slate-800 p-1.5 rounded-2xl shadow-xl dark:shadow-none backdrop-blur-xl opacity-75">
+                  <div className="flex flex-col sm:flex-row gap-2 ">
                     <Input
                       placeholder="Input temporal coordinates..."
                       value={query}
                       onChange={(e) => setQuery(e.target.value)}
                       onKeyDown={(e) => e.key === 'Enter' && handleGenerate()}
-                      className="bg-transparent border-0 h-14 text-lg focus-visible:ring-0 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600"
+                      className="bg-transparent border-0 h-14 text-lg focus-visible:ring-0 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 opacity-95"
                     />
                     <Button
                       onClick={handleGenerate}

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useParams } from 'next/navigation'
 import { Loader2, Sparkles, Code2 } from "lucide-react"
 import { MermaidDiagram } from "@lightenna/react-mermaid-diagram"
@@ -15,6 +15,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card"
 import { Separator } from "@/components/ui/separator"
 import { REQUEST } from "@/routes"
+import { downloadPNG , downloadSVG} from "@/lib/helper"
 
 type ChartType = "flowchart" | "sequence" | "gantt" | "class" | "git" | "er" | "journey" | "quadrant" | "xy"
 
@@ -31,6 +32,7 @@ const CHART_OPTIONS = [
 ]
 
 export default function ChartPage() {
+    const diagramRef = useRef<HTMLDivElement>(null);
     const params = useParams<{ id: string }>()
     const [query, setQuery] = useState("")
     const [selectedType, setSelectedType] = useState<ChartType>("flowchart")
@@ -189,11 +191,22 @@ export default function ChartPage() {
                             )}
                         </CardHeader>
 
-                        <CardContent className="min-h-[400px] flex justify-center items-center bg-white dark:bg-slate-950/40">
+                        <CardContent className="min-h-100 flex justify-center items-center bg-white dark:bg-slate-950/40">
                             {loading ? (
                                 <Loader2 className="w-8 h-8 animate-spin text-primary" />
                             ) : (
-                                <MermaidDiagram>{diagram!.code}</MermaidDiagram>
+                                <>
+                                    <div ref={diagramRef}>
+                                        <MermaidDiagram>{diagram!.code}</MermaidDiagram>
+                                    </div>
+                                    <div>
+                                    
+                                        {diagramRef.current && <Button onClick={() => diagramRef.current && downloadSVG(diagramRef)}>
+                                            Save SVG
+                                        </Button>}
+
+                                    </div>
+                                </>
                             )}
                         </CardContent>
                     </Card>

@@ -188,7 +188,7 @@ export default function AdvancedQuizPage() {
 
     if (loading) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900">
+            <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900">
                 <div className="text-center space-y-4">
                     <Loader2 className="w-12 h-12 animate-spin mx-auto text-primary" />
                     <p className="text-muted-foreground">Generating your assessment...</p>
@@ -199,7 +199,7 @@ export default function AdvancedQuizPage() {
 
     if (error) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900 p-4">
+            <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900 p-4">
                 <Alert variant="destructive" className="max-w-md">
                     <AlertDescription>{error}</AlertDescription>
                 </Alert>
@@ -213,7 +213,7 @@ export default function AdvancedQuizPage() {
         const grade = percentage >= 90 ? "A" : percentage >= 80 ? "B" : percentage >= 70 ? "C" : percentage >= 60 ? "D" : "F";
 
         return (
-            <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900 py-8 px-4">
+            <div className="min-h-screen bg-linear-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900 py-8 px-4">
                 <div className="container mx-auto max-w-5xl">
                     {/* Results Summary */}
                     <Card className="mb-8 border-2">
@@ -349,7 +349,7 @@ export default function AdvancedQuizPage() {
 
     // Quiz Taking View
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900 py-8 px-4">
+        <div className="min-h-screen bg-linear-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900 py-8 px-4">
             <div className="container mx-auto max-w-5xl">
                 {/* Exam Header */}
                 <Card className="mb-8 border-2">
