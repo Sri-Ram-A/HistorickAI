@@ -41,3 +41,5 @@ You should see:
 https://mermaid.js.org/intro/
 https://www.npmjs.com/package/@lightenna/react-mermaid-diagram
 # Now going to create session
+
+ - Will use this later maybe : https://medium.com/@MatDrinksTea/rendering-markdown-and-latex-in-react-dec355e74119

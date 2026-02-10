@@ -11,6 +11,10 @@ class TimelineEntry(BaseModel):
     description: str
     image_source: str
     alternative: str
+
+class TimelineOutput(BaseModel):
+    title: str = Field(description="Overall title for the timeline")
+    events: List[TimelineEntry] = Field(description="Chronological list of events")
     
 class DiagramOutput(BaseModel):
     """

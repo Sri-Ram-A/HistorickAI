@@ -1,210 +1,170 @@
-"use client";
+'use client'
 
-import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import Image from "next/image";
-import { REQUEST } from "@/routes";
-import { TimelineEntry } from "@/types";
-import { Timeline } from "@/components/timeline";
-
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
-
-// Icons
-import {
-  Search,
-  Sparkles,
-  Clock,
-  ArrowRight,
-  Loader2,
-  RefreshCcw,
-  History
-} from "lucide-react";
+import { useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import Image from 'next/image'
+import { useParams } from 'next/navigation'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Badge } from '@/components/ui/badge'
+import { Card } from '@/components/ui/card'
+import { Timeline } from '@/components/timeline'
+import { Sparkles, Loader2, RefreshCcw, History, Calendar, Rocket, Orbit } from 'lucide-react'
+import { REQUEST } from '@/routes'
+import { TimelineOutput } from '@/types'
 
 export default function TimelinePage() {
-  const [timelineData, setTimelineData] = useState<TimelineEntry[]>([]);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
-  const [userQuery, setUserQuery] = useState<string>("");
-  const [isGenerated, setIsGenerated] = useState<boolean>(false);
+  const params = useParams<{ id: string }>()
+  const [timelineResponse, setTimelineResponse] = useState<TimelineOutput | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [query, setQuery] = useState('')
+  const [isGenerated, setIsGenerated] = useState(false)
 
   const handleGenerate = async () => {
-    if (!userQuery.trim()) return;
-    setLoading(true);
-    setError(null);
+    if (!query.trim()) return
+    setLoading(true)
+    setError(null)
 
     try {
-      // Using your custom REQUEST utility
-      const data = await REQUEST("POST", "chat/generate_timeline/", { message: userQuery });
-
-      const formattedData = data.response.map((item: any) => ({
-        title: item.title,
-        content: (
-          <div className="group relative space-y-6">
-            {/* Entry Header */}
-            <div className="space-y-2">
-              <Badge variant="outline" className="border-purple-500/30 text-purple-400 bg-purple-500/5 backdrop-blur-md">
-                Historical Milestone
-              </Badge>
-              <h2 className="text-3xl md:text-4xl font-extrabold tracking-tight text-white group-hover:text-purple-400 transition-colors">
-                {item.heading}
-              </h2>
-            </div>
-
-            {/* Description Card */}
-            <Card className="p-6 bg-white/5 dark:bg-zinc-900/40 border-white/10 backdrop-blur-xl shadow-2xl">
-              <p className="text-neutral-400 text-base md:text-lg leading-relaxed italic">
-                "{item.description}"
-              </p>
-            </Card>
-
-            {/* Visual Section */}
-            <div className="relative aspect-video w-full overflow-hidden rounded-2xl border border-white/10 shadow-2xl">
-              <div className="absolute inset-0 bg-linear-to-t from-black/60 via-transparent to-transparent z-10" />
-              <Image
-                src={item.image_source}
-                alt={item.alternative || "Historical visualization"}
-                fill
-                className="object-cover transition-transform duration-700 group-hover:scale-105"
-                sizes="(max-width: 768px) 100vw, 50vw"
-              />
-              <div className="absolute bottom-4 left-4 z-20 flex items-center gap-2">
-                <Clock className="w-4 h-4 text-purple-400" />
-                <span className="text-xs font-medium text-white/80 tracking-widest uppercase">Visual Archive Record</span>
-              </div>
-            </div>
-          </div>
-        ),
-      }));
-
-      setTimelineData(formattedData);
-      setIsGenerated(true);
+      const data: TimelineOutput = await REQUEST('POST', 'chat/generate_timeline/', {
+        source_folder_id: params.id,
+        query: query.trim(),
+      })
+      setTimelineResponse(data)
+      setIsGenerated(true)
     } catch (err: any) {
-      setError(err.message || "An error occurred while accessing the archives.");
+      setError(err.message || 'Transmission failed. Signal lost.')
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
+
+  const formattedTimelineData = timelineResponse?.events.map((event) => ({
+    title: event.title,
+    content: (
+      <div className="group/item relative space-y-6">
+        {/* Event Header */}
+        <div className="space-y-3">
+          <Badge
+            variant="secondary"
+            className="bg-orange-100/50 text-orange-700 border-orange-200 dark:bg-slate-800/50 dark:text-orange-400 dark:border-orange-500/20 transition-colors"
+          >
+            <Orbit className="w-3 h-3 mr-1.5 animate-spin-slow" />
+            Temporal Node
+          </Badge>
+
+          <h2 className="text-2xl md:text-4xl font-bold tracking-tight text-slate-900 dark:text-white group-hover/item:text-orange-600 dark:group-hover/item:text-transparent dark:group-hover/item:bg-clip-text dark:group-hover/item:bg-linear-to-r dark:group-hover/item:from-orange-400 dark:group-hover/item:to-rose-400 transition-all duration-300">
+            {event.heading}
+          </h2>
+        </div>
+
+        {/* Image Container */}
+        <div className="relative aspect-video w-full overflow-hidden rounded-xl border border-slate-200 dark:border-slate-800 shadow-xl dark:shadow-2xl bg-slate-100 dark:bg-slate-900">
+          <Image
+            src={event.image_source}
+            alt={event.alternative || event.heading}
+            fill
+            className="object-cover transition-transform duration-1000 group-hover/item:scale-105"
+          />
+          {/* Adaptive Overlay: Lighter in light mode, deeper in dark mode */}
+          <div className="absolute inset-0 bg-linear-to-t from-slate-200/40 dark:from-slate-950/80 via-transparent to-transparent" />
+        </div>
+
+        {/* Description */}
+        <p className="text-slate-600 dark:text-slate-400 text-base md:text-lg leading-relaxed font-light border-l-2 border-slate-200 dark:border-slate-800 pl-6 py-2 transition-colors">
+          {event.description}
+        </p>
+      </div>
+    ),
+  })) || []
 
   return (
-    <div className="relative min-h-screen bg-white text-white selection:bg-purple-500/30 dark:bg-neutral-950">
+    <div className="relative min-h-screen bg-white dark:bg-[#020617] text-slate-900 dark:text-slate-50 overflow-x-hidden selection:bg-orange-500/30 transition-colors duration-300">
+      {/* Space Background Effects - Subtle blurs that work on both themes */}
+      <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
+        <div className="absolute top-0 left-1/4 w-125 h-125 bg-indigo-500/10 dark:bg-indigo-600/10 blur-[120px] rounded-full opacity-50" />
+        <div className="absolute bottom-0 right-1/4 w-100 h-100 bg-rose-500/10 dark:bg-rose-600/10 blur-[120px] rounded-full opacity-30" />
+      </div>
 
-      <main className="relative z-10 flex flex-col items-center">
+      <main className="relative z-10 container mx-auto px-6">
+        <AnimatePresence mode="wait">
+          {!isGenerated ? (
+            <motion.section
+              key="landing"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.98 }}
+              className="flex flex-col items-center justify-center min-h-screen text-center py-20"
+            >
+              {/* Badge: Adaptive border and background */}
+              <Badge
+                variant="outline"
+                className="mb-8 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 px-4 py-1.5 bg-slate-50/50 dark:bg-slate-900/50 backdrop-blur-md"
+              >
+                <Sparkles className="w-3.5 h-3.5 mr-2 text-orange-500 dark:text-orange-400" />
+                Intelligence Protocol v2.0
+              </Badge>
 
-        {/* State 1: Search Header */}
-          <AnimatePresence mode="wait">
-            {!isGenerated ? (
-              <div className="parent relative w-full min-h-screen">
+              {/* Hero Text: Dual-theme linear mapping */}
+              <h1 className="text-6xl md:text-8xl font-bold tracking-tighter mb-8 bg-clip-text text-transparent bg-linear-to-b from-slate-900 via-slate-800 to-slate-500 dark:from-white dark:via-white dark:to-slate-500">
+                It&apos;s Wolf Time <span className="text-slate-900 dark:text-white">Engine</span>
+              </h1>
 
-                <div className="background absolute inset-0 z-0">
-                  <img src="/images/timeline.png" alt="Timeline background" className="h-full w-full object-contain brightness-75" />
-                </div>
+              {/* Input Group: Glassmorphism that lightens/darkens properly */}
+              <div className="relative w-full max-w-2xl group">
+                {/* Glow Effect: Reduced opacity in light mode for professionalism */}
+                <div className="absolute -inset-1 bg-linear-to-r from-indigo-500 via-rose-500 to-orange-500 rounded-2xl blur opacity-15 dark:opacity-25 group-hover:opacity-30 dark:group-hover:opacity-40 transition duration-1000" />
 
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
-                  className="text-center space-y-8 relative z-10"
-                >
-
-                  <div className="space-y-4">
-                    <Badge className="bg-white/10 text-white hover:bg-white/20 border-white/10 px-4 py-1">
-                      <Sparkles className="w-3 h-3 mr-2 text-purple-400" />
-                      AI-Powered Chronology
-                    </Badge>
-                    <h1 className="text-6xl md:text-8xl font-black tracking-tighter bg-linear-to-b dark:from-white dark:to-white/40 bg-clip-text">
-                      It's Time
-                    </h1>
-                    <p className="text-neutral-500 text-lg md:text-xl max-w-xl mx-auto font-medium dark:text-neutral-300">
-                      To enter a <span className="bg-red-400 p-1 rounded text-white">subject
-                      </span> to reconstruct its <span className="bg-purple-500 text-white p-1 rounded">
-                        journey</span> through time with <span className="p-0.5 bg-green-400 text-white">
-                        photographic</span> precision.
-                    </p>
-                  </div>
-
-                  <div className="relative max-w-2xl mx-auto">
+                <Card className="relative bg-white/80 dark:bg-slate-950 border-slate-200 dark:border-slate-800 p-1.5 rounded-2xl shadow-xl dark:shadow-none backdrop-blur-xl">
+                  <div className="flex flex-col sm:flex-row gap-2">
                     <Input
-                      placeholder="e.g. The Renaissance, SpaceX, or Ancient Rome..."
-                      value={userQuery}
-                      onChange={(e) => setUserQuery(e.target.value)}
-                      onKeyDown={(e) => e.key === "Enter" && handleGenerate()}
-                      className="h-16 pl-6 pr-40 bg-white/5 border-white/10 rounded-2xl text-xl backdrop-blur-2xl focus-visible:ring-purple-500/50 dark:text-neutral-300"
+                      placeholder="Input temporal coordinates..."
+                      value={query}
+                      onChange={(e) => setQuery(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && handleGenerate()}
+                      className="bg-transparent border-0 h-14 text-lg focus-visible:ring-0 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600"
                     />
                     <Button
                       onClick={handleGenerate}
-                      disabled={loading || !userQuery}
-                      className="absolute right-2 top-2 h-12 px-6 bg-white text-black hover:bg-neutral-200 rounded-xl font-bold transition-transform active:scale-95"
+                      disabled={loading || !query.trim()}
+                      className="h-14 px-8 bg-slate-900 dark:bg-white text-white dark:text-black hover:bg-slate-800 dark:hover:bg-slate-200 rounded-xl font-semibold transition-all shadow-lg dark:shadow-none"
                     >
-                      {loading ? <Loader2 className="animate-spin w-5 h-5" /> : "Generate"}
+                      {loading ? (
+                        <Loader2 className="animate-spin" />
+                      ) : (
+                        <>
+                          <Rocket className="w-4 h-4 mr-2" />
+                          Launch
+                        </>
+                      )}
                     </Button>
                   </div>
-                </motion.div>
+                </Card>
               </div>
-            ) : (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="flex flex-col md:flex-row items-center justify-between gap-6 border-b border-white/10 pb-8"
-              >
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2 text-purple-400 font-bold uppercase tracking-widest text-xs">
-                    <History className="w-3 h-3" />
-                    Archive Result
+            </motion.section>
+          ) : (
+            <motion.section initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="py-16">
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-12 border-b border-slate-800 pb-12">
+                <div>
+                  <div className="flex items-center gap-2 text-orange-400 text-xs font-bold uppercase tracking-[0.2em] mb-2">
+                    <History className="w-4 h-4" />
+                    Archive Retrieved
                   </div>
-                  <h2 className="text-4xl font-bold capitalize tracking-tight">{userQuery}</h2>
+                  <h2 className="text-4xl md:text-5xl font-bold dark:text-white tracking-tight">
+                    {timelineResponse?.title || query}
+                  </h2>
                 </div>
-                <Button
-                  variant="outline"
-                  onClick={() => { setTimelineData([]); setIsGenerated(false); }}
-                  className="rounded-full bg-white/5 border-white/10 hover:bg-white/10 group"
-                >
-                  <RefreshCcw className="w-4 h-4 mr-2 group-hover:rotate-180 transition-transform duration-500" />
-                  New Exploration
+                <Button variant="outline" onClick={() => setIsGenerated(false)} className="300 rounded-full px-6">
+                  <RefreshCcw className="w-4 h-4 mr-2" />
+                  Reset Sequence
                 </Button>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-        {/* State 2: Loading Overlay */}
-        {loading && !isGenerated && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-md">
-            <div className="text-center space-y-4">
-              <div className="relative w-24 h-24 mx-auto">
-                <div className="absolute inset-0 border-t-2 border-purple-500 rounded-full animate-spin" />
-                <div className="absolute inset-4 border-t-2 border-blue-500 rounded-full animate-spin [animation-duration:1.5s]" />
               </div>
-              <p className="text-white font-mono tracking-widest text-sm animate-pulse">RECONSTRUCTING TIMELINE...</p>
-            </div>
-          </div>
-        )}
-
-        {/* State 3: Error */}
-        {error && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="mt-8">
-            <Badge variant="destructive" className="py-2 px-6 text-sm">{error}</Badge>
-          </motion.div>
-        )}
-
-        {/* State 4: Timeline Rendering */}
-        {isGenerated && timelineData.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 40 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1, ease: "easeOut" }}
-            className="w-full"
-          >
-            <Timeline data={timelineData} />
-          </motion.div>
-        )}
+              <Timeline data={formattedTimelineData} />
+            </motion.section>
+          )}
+        </AnimatePresence>
       </main>
     </div>
-  );
-}
-
-// Helper function for conditional classes
-function cn(...classes: any[]) {
-  return classes.filter(Boolean).join(" ");
+  )
 }

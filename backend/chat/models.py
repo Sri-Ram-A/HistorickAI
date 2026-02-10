@@ -32,11 +32,26 @@ class Flowchart(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     session = models.ForeignKey(Session,on_delete=models.CASCADE,related_name="flowcharts")
     query = models.TextField()
+    title = models.CharField(max_length=255,null=True,blank=True)
     response = models.TextField()
     type = models.CharField(choices=DIAGRAM_TYPES, help_text="Type of flowchart to generate")
     created_at = models.DateTimeField(auto_now_add=True)
     class Meta:
         indexes = [models.Index(fields=["session"]),models.Index(fields=["created_at"]),]
+    
+    def __str__(self):
+        return f"{self.type}:{self.query}"
+
+class Timeline(models.Model):
+    session = models.ForeignKey(Session, on_delete=models.CASCADE, related_name="timelines")
+    query = models.TextField()
+    title = models.CharField(max_length=255)
+    response = models.JSONField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.title
+
 
 class Message(models.Model):
     """ Individual message in a chat session. Stores both user and AI messages. """

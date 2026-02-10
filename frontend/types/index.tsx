@@ -35,6 +35,18 @@ export interface FolderT {
 //for app/about
 export interface TimelineEntry {
   title: string;
+  heading: string;
+  description: string;
+  image_source: string;
+  alternative: string;
+}
+
+export interface TimelineOutput {
+  title: string;
+  events: TimelineEntry[];
+}
+export interface TimelineUIItem {
+  title: string;
   content: React.ReactNode;
 }
 // for app/quiz

@@ -37,9 +37,9 @@ export default function LearnPage() {
       description: "Generate AI-powered video explanations for complex topics",
       route: `/${params.id}/video`,
       image: "/images/animals/lion.png",
-      badge: { text: "Create", variant: "default", color: "bg-purple-500" },
+      badge: { text: "Create", variant: "default", color: "bg-orange-500" },
       icon: Video,
-      color: "text-purple-500"
+      color: "text-orange-500"
     },
     {
       title: "Take Assessment",
@@ -64,9 +64,9 @@ export default function LearnPage() {
       description: "Create interactive timelines to visualize historical events",
       route: `/${params.id}/timeline`,
       image: "/images/animals/wolf.png",
-      badge: { text: "Visualize", variant: "default", color: "bg-orange-500" },
+      badge: { text: "Visualize", variant: "default", color: "bg-purple-500" },
       icon: Timer,
-      color: "text-orange-500"
+      color: "text-purple-500"
     },
     {
       title: "Diagrams",

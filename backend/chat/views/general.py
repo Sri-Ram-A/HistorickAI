@@ -21,6 +21,7 @@ import chat.serializers.general as serializers
 import chat.schemas as schemas
 from chat.models import Folder
 from chat.mixin import SessionResolverMixin
+from chat.helper import search_google_image
 # Create your views here.
 TOP_K = 5
 
@@ -62,44 +63,57 @@ class RetrieveChunksView(APIView):
 
 @extend_schema(
     tags=["Create"],
-    summary="Generate a timeline from a message",
-    description="Creates a structured timeline with events and dates based on the provided message content.",
+    summary="Generate a timeline from a query",
+    description="Creates a structured timeline with events and dates based on the provided query content.",
 )
-class CreateTimelineAPIView(APIView):
+class CreateTimelineAPIView(SessionResolverMixin, APIView):
     serializer_class = serializers.TimelineRequestSerializer
 
-    def post(self, request):
+    def post(self, request: Request):
         # Validate request
-        serializer = self.serializer_class(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        validated = cast(Dict[str, Any], serializer.validated_data)
+        request_serializer = self.serializer_class(data=request.data)
+        request_serializer.is_valid(raise_exception=True)
+        validated = cast(Dict[str, Any], request_serializer.validated_data)
 
-        # Retrieve required keys
-        query = validated["message"]
-
+        query = validated["query"]
+        # from your mixin
+        session = self.get_session(request)
         try:
-            # Fetch model - Generate timeline using LLM
-            response = model.generate(
-                list[schemas.general.TimelineEntry],
-                system_instructions.timeline_instruction,
-                query
+            llm_input = f"""
+                Create a clear, chronological timeline from the following content.
+                User query:
+                {query}
+                Output must include:
+                - A timeline title
+                - Ordered events with dates and descriptions
+            """
+            raw_response: str = model.generate(
+                schema=schemas.general.TimelineOutput,
+                system_instruction=system_instructions.timeline_instruction,
+                query=llm_input,
             )
-            parsed = json.loads(response)
-            logger.info("Timeline generated ❤️")
+            if not raw_response:
+                return Response({"error": "Timeline generation failed"},status=status.HTTP_500_INTERNAL_SERVER_ERROR,)
+            timeline = schemas.general.TimelineOutput.model_validate_json(raw_response)
+            models.Timeline.objects.create(
+                session=session,
+                query=query,
+                title=timeline.title,
+                response=timeline.model_dump(),
+            )
 
-            # Validate response
-            res_serializer = serializers.TimelineResponseSerializer(data={"response": parsed})
-            res_serializer.is_valid(raise_exception=True)
-
-            # Send response
-            return Response(res_serializer.data, status=status.HTTP_200_OK)
+            # Replace with actual images urls from google
+            for event in timeline.events:
+                try:
+                    imgs = search_google_image(event.title or event.heading)
+                    event.image_source = imgs[0] if imgs else ""
+                except Exception:
+                    event.image_source = ""
+            return Response(timeline.model_dump(), status=status.HTTP_200_OK)
 
         except Exception as e:
             logger.exception("Timeline generation failed")
-            return Response(
-                {"error": str(e)},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
+            return Response({"error": str(e)},status=status.HTTP_500_INTERNAL_SERVER_ERROR,)
 
 
 @extend_schema(
@@ -192,7 +206,8 @@ class CreateChartAPIView(SessionResolverMixin,APIView):
                 session=session,
                 query=query,
                 response=diagram.code,
-                type=diagram_type
+                type=diagram_type,
+                title=diagram.title
             )
             return Response(diagram.model_dump(), status=status.HTTP_200_OK)
 

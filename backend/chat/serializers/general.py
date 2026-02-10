@@ -18,17 +18,9 @@ class RetrieveResponseSerializer(serializers.Serializer):
 
 # Timeline Serializers
 class TimelineRequestSerializer(serializers.Serializer):
-    message = serializers.CharField(max_length=1000)
-
-class TimelineItemSerializer(serializers.Serializer):
-    title = serializers.CharField()
-    heading = serializers.CharField()
-    description = serializers.CharField()
-    image_source = serializers.CharField()
-    alternative = serializers.CharField()
-
-class TimelineResponseSerializer(serializers.Serializer):
-    response = TimelineItemSerializer(many=True)
+    source_folder_id = serializers.UUIDField(required=True,help_text="ID of the source folder (parent folder) to start session ")
+    query = serializers.CharField(max_length=2000,required=True,help_text="Description of the Timeline to generate")
+    
 
 # Flowchart Diagram Serializers
 class DiagramRequestSerializer(serializers.Serializer):
@@ -40,10 +32,6 @@ class DiagramRequestSerializer(serializers.Serializer):
         if not value.strip():
             raise serializers.ValidationError("Query cannot be empty")
         return value.strip()
-
-class DiagramResponseSerializer(serializers.Serializer):
-    title = serializers.CharField(help_text="Title of the generated diagram")
-    code = serializers.CharField(help_text="Mermaid diagram code")
 
 # Quiz Preparation Serializers
 class SourcesSerializer(serializers.Serializer):
