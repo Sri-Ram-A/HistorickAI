@@ -34,6 +34,7 @@ export interface FolderT {
 
 //for app/about
 export interface TimelineEntry {
+  date:string;
   title: string;
   heading: string;
   description: string;

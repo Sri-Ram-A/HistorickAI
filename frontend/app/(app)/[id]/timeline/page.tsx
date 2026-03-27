@@ -50,8 +50,8 @@ export default function TimelinePage() {
             variant="secondary"
             className="bg-orange-100/50 text-orange-700 border-orange-200 dark:bg-slate-800/50 dark:text-orange-400 dark:border-orange-500/20 transition-colors"
           >
-            <Orbit className="w-3 h-3 mr-1.5 animate-spin-slow" />
-            Temporal Node
+            <Orbit className="w-3 h-3 animate-spin" />
+            {event.date || ''}
           </Badge>
 
           <h2 className="text-2xl md:text-4xl font-bold tracking-tight text-slate-900 dark:text-white group-hover/item:text-orange-600 dark:group-hover/item:text-transparent dark:group-hover/item:bg-clip-text dark:group-hover/item:bg-linear-to-r dark:group-hover/item:from-orange-400 dark:group-hover/item:to-rose-400 transition-all duration-300">

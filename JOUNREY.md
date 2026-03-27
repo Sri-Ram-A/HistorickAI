@@ -43,3 +43,38 @@ https://www.npmjs.com/package/@lightenna/react-mermaid-diagram
 # Now going to create session
 
  - Will use this later maybe : https://medium.com/@MatDrinksTea/rendering-markdown-and-latex-in-react-dec355e74119
+
+
+ - pip install requests beautifulsoup4
+- https://github.com/unclecode/crawl4ai
+
+
+
+You are already inside psql:
+mydatabase=#
+Now do the following.
+Step 1 — Enable the vector extension
+Inside psql, run:
+```sql
+CREATE EXTENSION IF NOT EXISTS vector;
+```
+If successful, you should see:
+```sql
+CREATE EXTENSION
+```
+Step 2 — Verify it exists
+Run:
+```bash
+\dx
+```
+You should see something like:
+vector | x.x.x | public | vector data type and ivfflat index
+If you see it listed, PostgreSQL now recognizes the vector type.
+Step 3 — Exit psql
+\q
+Step 4 — Run Django migrations again
+Back in your Django project:
+```bash
+python manage.py migrate
+```
+The error type "vector" does not exist should now disappear.

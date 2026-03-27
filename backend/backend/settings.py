@@ -17,6 +17,15 @@ load_dotenv(".env.local")
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+###
+MEDIA_DIR = BASE_DIR / "extracted"
+VIDEO_DIR = MEDIA_DIR / "videos"
+IMAGE_DIR = MEDIA_DIR / "images"
+AUDIO_DIR = MEDIA_DIR / "audios"
+
+for directory in [MEDIA_DIR,VIDEO_DIR,AUDIO_DIR,IMAGE_DIR]:
+    directory.mkdir(exist_ok=True,parents=True)
+###
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/

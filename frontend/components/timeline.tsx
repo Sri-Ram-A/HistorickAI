@@ -47,7 +47,7 @@ export const Timeline = ({ data }: { data: TimelineEntry[] }) => {
               {/* The Inner Core */}
               <div className="absolute inset-0 from-orange-500 via-indigo-500 to-rose-500 opacity-0" />
 
-              <h3 className="hidden md:block text-xl md:pl-20 md:text-5xl font-bold text-neutral-500 dark:text-neutral-500">
+              <h3 className="hidden md:block text-xl md:pl-20 md:text-5xl font-bold text-orange-500 hover:text-purple-500 dark:text-neutral-500">
                 {item.title}
               </h3>
             </div>
