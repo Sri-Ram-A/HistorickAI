@@ -9,7 +9,7 @@ drf-spectacular
 djangorestframework-simplejwt
 djangorestframework-jwt
 django-cors-headers
-shortuuid
+chromadb
 
 # Processing dependencies
 docling # 4GB

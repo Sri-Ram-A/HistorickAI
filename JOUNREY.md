@@ -78,3 +78,37 @@ Back in your Django project:
 python manage.py migrate
 ```
 The error type "vector" does not exist should now disappear.
+
+# April - changes 
+- Scraping ankane vector and moving to chromaDB persistent storage
+- Converted Tree Structure maintainence in frontend
+- Backend for folders made simpler
+- https://medium.com/@pierrelouislet/getting-started-with-chroma-db-a-beginners-tutorial-6efa32300902
+```python
+import chromadb
+TypeError: Descriptors cannot be created directly.
+If this call came from a _pb2.py file, your generated code is out of date and must be regenerated with protoc >= 3.19.0.
+If you cannot immediately regenerate your protos, some other possible workarounds are:
+ 1. Downgrade the protobuf package to 3.20.x or lower.
+ 2. Set PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python (but this will use pure-Python parsing and will be much slower).
+```
+```bash
+pip install protobuf==3.20.3
+SUCCESS: ChromaDB imports worked
+ERROR: pip's dependency resolver does not currently take into account all the packages that are installed. This behaviour is the source of the following dependency conflicts.
+googleapis-common-protos 1.74.0 requires protobuf<8.0.0,>=4.25.8, but you have protobuf 3.20.3 which is incompatible.
+```
+> Next Tried
+```bash
+# Uninstall conflicting packages
+pip uninstall protobuf googleapis-common-protos chromadb -y
+# Install ChromaDB with pinned dependencies
+pip install chromadb==0.4.24 protobuf==3.20.3
+# Install compatible googleapis-common-protos
+pip install googleapis-common-protos==1.56.4
+```
+```python
+import chromadb
+AttributeError: `np.float_` was removed in the NumPy 2.0 release. Use `np.float64` instead.
+```
+Therefore sticked on with protobuf==3.20.3

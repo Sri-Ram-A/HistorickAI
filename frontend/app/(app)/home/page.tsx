@@ -19,7 +19,7 @@ export default function Home() {
 
   const handleCreate = async () => {
     if (!newFolder.trim()) return;
-    await createFolder(newFolder, null);
+    await createFolder({ name: newFolder, parentId: null });
     setNewFolder("");
   };
 
