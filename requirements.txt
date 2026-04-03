@@ -1,0 +1,19 @@
+# Extra dependencies
+loguru
+python-dotenv
+
+# Django dependencies
+Django
+djangorestframework
+drf-spectacular
+djangorestframework-simplejwt
+djangorestframework-jwt
+django-cors-headers
+shortuuid
+
+# Processing dependencies
+docling # 4GB
+Pillow
+transformers
+groq
+serpapi

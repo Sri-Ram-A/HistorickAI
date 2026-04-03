@@ -1,7 +1,7 @@
 "use client"
 
 import React from "react"
-import { AppSidebar } from "@/components/app-sidebar"
+import { FileSidebar } from "@/components/folder/app-sidebar"
 import { Toaster } from "@/components/ui/sonner"
 import { Sun, Moon } from "lucide-react";
 import { useTheme } from "next-themes";
@@ -22,9 +22,10 @@ export default function CitizenLayout({
     return (
         <SidebarProvider>
             {/* Sidebar */}
-            <AppSidebar />
+            <FileSidebar />
 
             <SidebarInset className="flex min-h-screen flex-col">
+
                 {/* HEADER */}
                 <SidebarTrigger className="h-9 w-9 bg-accent rounded-4xl fixed top-2 left-2 z-50" />
                 <Button className="h-9 w-9 bg-accent-foreground rounded-4xl fixed top-2 right-2 z-50" onClick={() => setTheme(theme === "dark" ? "light" : "dark")}>
@@ -34,12 +35,14 @@ export default function CitizenLayout({
                         <Moon className="h-4 w-4" />
                     )}
                 </Button>
+
                 {/* PAGE CONTENT */}
                 <main className="flex-1 p-4">
                     {children}
                 </main>
                 <Toaster />
             </SidebarInset>
+
         </SidebarProvider>
     )
 }

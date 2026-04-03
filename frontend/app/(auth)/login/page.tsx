@@ -54,6 +54,11 @@ export default function LoginPage() {
 
   return (
     <div className="flex h-screen w-full">
+      {/* Background */}
+      <div className="absolute inset-0 -z-10">
+        <img src="/backgrounds/login.png" alt="Background" className="object-cover w-full h-full" />
+      </div>
+
       <div className="flex w-full md:w-1/2 flex-col p-6 md:p-10">
         <div className="flex justify-center gap-2 md:justify-start">
           <a href="#" className="flex items-center gap-2 font-medium">
@@ -65,7 +70,7 @@ export default function LoginPage() {
         </div>
 
         <div className="flex flex-1 items-center justify-center">
-          <div className="w-full max-w-xs">
+          <div className="w-full max-w-xs bg-background/50 backdrop-blur-sm p-6 rounded-xl shadow-lg">
             <form className="flex flex-col gap-6" onSubmit={handleSubmit}>
               <FieldGroup>
                 <div className="flex flex-col items-center gap-1 text-center">
@@ -100,7 +105,9 @@ export default function LoginPage() {
                   />
                   {errors.password && <p className="text-sm text-red-500 mt-1">{errors.password}</p>}
                 </Field>
-
+                <FieldDescription>
+                  Make sure your caps lock is off.
+                </FieldDescription>
                 {serverError && <p className="text-sm text-red-500">{serverError}</p>}
 
                 <Field>
@@ -130,13 +137,6 @@ export default function LoginPage() {
         </div>
       </div>
 
-      <div className="hidden md:block md:w-2/3 relative">
-        <video autoPlay muted loop playsInline className="absolute inset-0 h-full w-full object-cover">
-          <source src="/videos/login.mp4" type="video/mp4" />
-        </video>
-
-        <div className="absolute inset-0 bg-black/40" />
-      </div>
     </div>
   )
 }

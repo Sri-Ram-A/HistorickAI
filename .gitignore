@@ -1,28 +1,28 @@
+# Python
+__pycache__/
+*.py[cod]
 
-### ADDED BY ME
-**/videos/
-**/audios/
-**/__pycache__/
-
-*.mp4
-**/*.mp4
-*.mp3
-**/*.mp3
-/venv/
-**/*.wav
-
-.env/
-**/vosk-model/
-models/
+# Env
 .env
-.env.local
+.env.*
 
-api/.env
-api/.env.local
-api/src/media/
-backend/app/migrations/
-backend/app/__pycache__/
-frontend/node_modules/
-backend/db.sqlite3
-backend/hf_models
-backend/media/
+# Node
+node_modules/
+
+# Build / runtime
+dist/
+build/
+
+# Media
+media/
+uploads/
+extracted/
+migrations/
+
+# DB
+*.sqlite3
+
+# OS
+.DS_Store
+
+# git rm -r --cached media/

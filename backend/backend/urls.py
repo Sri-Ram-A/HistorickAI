@@ -14,23 +14,29 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+
 from django.contrib import admin
 from django.urls import path, include
 from django.http import HttpResponse
 from django.conf import settings
 from django.conf.urls.static import static
-from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView # Needs internet
+from drf_spectacular.views import (
+    SpectacularAPIView,
+    SpectacularSwaggerView,
+)  # Needs internet
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('', lambda request: HttpResponse("Welcome to my API! Explore the endpoints."), name='welcome'),
-    path('schema/', SpectacularAPIView.as_view(), name='schema'),
-    path('swagger/', SpectacularSwaggerView.as_view(url_name='schema')),
-
+    path("admin/", admin.site.urls),
+    path(
+        "",
+        lambda request: HttpResponse("Welcome to my API! Explore the endpoints."),
+        name="welcome",
+    ),
+    path("schema/", SpectacularAPIView.as_view(), name="schema"),
+    path("swagger/", SpectacularSwaggerView.as_view(url_name="schema")),
     path("api/folder/", include("folders.urls")),
     path("api/auth/", include("auth.urls")),
     path("api/chat/", include("chat.urls")),
-
 ]
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

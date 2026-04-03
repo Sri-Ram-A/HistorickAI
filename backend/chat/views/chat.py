@@ -1,23 +1,16 @@
-import json
 from datetime import datetime
 from loguru import logger
-from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from django.shortcuts import get_object_or_404
-from pgvector.django import CosineDistance
-from drf_spectacular.utils import extend_schema, OpenApiResponse
-from pydantic import ValidationError
-from typing import cast, Dict, Any
+from drf_spectacular.utils import extend_schema
+from typing import cast
 
-from folders.models import Folder, Chunk
-from folders.signals import embedding_model
+from folders.models import Folder
 import chat.model as model
 from chat.models import Session,Message
 import chat.system_instructions as system_instructions
 import chat.serializers.chat as serializers
-import chat.schemas as schemas
 
 @extend_schema(
     tags=["Chat"],

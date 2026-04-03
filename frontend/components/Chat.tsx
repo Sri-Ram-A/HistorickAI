@@ -1,13 +1,13 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import { useFiles } from "@/contexts/FileContext";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Send, Paperclip, Loader2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { REQUEST } from "@/routes";
 import ReactMarkdown from "react-markdown";
+import { useFiles } from "@/components/folder/context";
 
 interface Message {
     id: string;

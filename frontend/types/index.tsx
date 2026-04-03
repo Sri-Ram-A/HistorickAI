@@ -15,23 +15,32 @@ export interface LoginFormValues {
 export interface AuthResponse {
   access: string
   refresh: string
-  // optionally: user: { id: number; email: string }
 }
+
 export interface FileT {
   id: string;
   name: string;
-  file?: string;
-  uploaded_at?: string; 
+  file?: string | null;
+  uploaded_at?: string;
+  folder: string;
+  folder_name?: string;
+  processed?: boolean;
 }
+
 export interface FolderT {
   id: string;
   name: string;
-  children: FolderT[];
-  files?: FileT[];
-  parent?: string | null;
-  created_at: string; // ISO date string
+  parent: string | null;
+  path: string;
+  is_root: boolean;
+  created_at: string;
+  updated_at?: string;
 }
 
+export type FolderNode = FolderT & {
+  children: FolderNode[];
+  files: FileT[];
+};
 //for app/about
 export interface TimelineEntry {
   date:string;

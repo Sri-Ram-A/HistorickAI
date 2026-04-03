@@ -1,96 +1,110 @@
+from django.shortcuts import get_object_or_404
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from django.shortcuts import get_object_or_404
 from rest_framework.parsers import MultiPartParser, FormParser
 from drf_spectacular.utils import extend_schema, OpenApiResponse
-
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from .models import Folder, File
 from .serializers import (
     FolderSerializer,
-    FolderCreateUpdateSerializer,
+    FolderWriteSerializer,
     FileSerializer,
-    FileCreateUpdateSerializer,
+    FileWriteSerializer,
 )
-@extend_schema(tags=["Folders"],summary="Create a folder for logged in user")
-class CreateFolderView(APIView):
-    serializer_class = FolderCreateUpdateSerializer
-    def post(self, request):
-        serializer = self.serializer_class(data=request.data,context={"request": request})
-        serializer.is_valid(raise_exception=True)
-        folder = serializer.save(owner=request.user)
-        return Response(FolderSerializer(folder).data,status=status.HTTP_201_CREATED)
-    
-@extend_schema(tags=["Folders"],summary="Update Folder name for logged in user")
-class UpdateFolderView(APIView):
-    serializer_class = FolderCreateUpdateSerializer
 
+
+class FolderView(APIView):
+
+    def get_serializer(self, request):
+        if request.method in ["POST", "PATCH"]:
+            return FolderWriteSerializer
+        return FolderSerializer
+
+    @extend_schema(tags=["Folders"],summary="Get folders or single folder")
+    def get(self, request, id=None):
+        if id:
+            folder = get_object_or_404(Folder, id=id, owner=request.user)
+            return Response(FolderSerializer(folder).data)
+        folders = Folder.objects.filter(owner=request.user).order_by("created_at")
+        return Response(FolderSerializer(folders, many=True).data)
+
+    @extend_schema(tags=["Folders"],summary="Create folder")
+    def post(self, request):
+        serializer = FolderWriteSerializer(
+            data=request.data, context={"request": request}
+        )
+        serializer.is_valid(raise_exception=True)
+        folder = serializer.save()
+        return Response(FolderSerializer(folder).data, status=status.HTTP_201_CREATED)
+
+    @extend_schema(tags=["Folders"],summary="Update folder")
     def patch(self, request, id):
         folder = get_object_or_404(Folder, id=id, owner=request.user)
-        serializer = self.serializer_class(
+        serializer = FolderWriteSerializer(
             folder,
             data=request.data,
             partial=True,
-            context={"request": request}
+            context={"request": request},
         )
         serializer.is_valid(raise_exception=True)
-        serializer.save()
-
+        folder = serializer.save()
         return Response(FolderSerializer(folder).data)
-    
-@extend_schema(
-    tags=["Folders"],
-    summary="Delete Folder of logged in user",
-    request=None,
-    responses={204: OpenApiResponse(description="Deleted successfully")}
-)
-class DeleteFolderView(APIView):
+
+    @extend_schema(tags=["Folders"],
+        summary="Delete folder",
+        request=None,
+        responses={204: OpenApiResponse(description="Deleted successfully")},
+    )
     def delete(self, request, id):
         folder = get_object_or_404(Folder, id=id, owner=request.user)
         folder.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
-    
-@extend_schema(tags=["Folders"],summary="View all folders of logged in user")
-class ViewFoldersView(APIView):
-    serializer_class=FolderSerializer
 
-    def get(self, request):
-        folders = Folder.objects.filter(owner=request.user, parent__isnull=True)
-        serializer = self.serializer_class(folders, many=True)
-        return Response(serializer.data)
 
-@extend_schema(tags=["Files"],summary="Create File of Logged in user")
-class CreateFileView(APIView):
-    parser_classes = [MultiPartParser, FormParser]
-    serializer_class = FileCreateUpdateSerializer
+class FileView(APIView):
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
+
+    @extend_schema(tags=["Files"],summary="Get files or single file")
+    def get(self, request, id=None):
+        if id:
+            file_obj = get_object_or_404(File, id=id, folder__owner=request.user)
+            return Response(FileSerializer(file_obj).data)
+
+        folder_id = request.query_params.get("folder")
+        qs = File.objects.filter(folder__owner=request.user)
+        if folder_id:
+            qs = qs.filter(folder_id=folder_id)
+        return Response(FileSerializer(qs, many=True).data)
+
+    @extend_schema(tags=["Files"],summary="Create file")
     def post(self, request):
-        serializer = self.serializer_class(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        file = serializer.save()
-        return Response(FileSerializer(file).data,status=status.HTTP_201_CREATED)
-@extend_schema(tags=["Files"],summary="Update file name of logged in user")
-class UpdateFileView(APIView):
-    serializer_class = FileCreateUpdateSerializer
-    def patch(self, request, id):
-        file = get_object_or_404(File, id=id)
-
-        serializer = self.serializer_class(
-            file,
-            data=request.data,
-            partial=True
+        serializer = FileWriteSerializer(
+            data=request.data, context={"request": request}
         )
         serializer.is_valid(raise_exception=True)
-        serializer.save()
+        file_obj = serializer.save()
+        return Response(FileSerializer(file_obj).data, status=status.HTTP_201_CREATED)
 
-        return Response(FileSerializer(file).data)
-@extend_schema(
-    tags=["Files"],
-    summary="Delete file of logged in user",
-    request=None,
-    responses={204: OpenApiResponse(description="Deleted successfully")}
-)
-class DeleteFileView(APIView):
+    @extend_schema(tags=["Files"],summary="Update file")
+    def patch(self, request, id):
+        file_obj = get_object_or_404(File, id=id, folder__owner=request.user)
+        serializer = FileWriteSerializer(
+            file_obj,
+            data=request.data,
+            partial=True,
+            context={"request": request},
+        )
+        serializer.is_valid(raise_exception=True)
+        file_obj = serializer.save()
+        return Response(FileSerializer(file_obj).data)
+
+    @extend_schema(tags=["Files"],
+        summary="Delete file",
+        request=None,
+        responses={204: OpenApiResponse(description="Deleted successfully")},
+    )
     def delete(self, request, id):
-        file = get_object_or_404(File, id=id,folder__owner=request.user)
-        file.delete()
+        file_obj = get_object_or_404(File, id=id, folder__owner=request.user)
+        file_obj.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)

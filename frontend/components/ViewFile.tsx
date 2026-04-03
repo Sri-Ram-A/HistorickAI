@@ -1,6 +1,6 @@
 "use client";
 
-import { useFiles } from "@/contexts/FileContext";
+import { useFiles } from "@/components/folder/context";
 import { getFileMetadata } from "@/components/folder/folder-tree";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
