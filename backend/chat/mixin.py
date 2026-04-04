@@ -1,7 +1,6 @@
 from chat.models import Session
 from folders.models import Folder
 from django.shortcuts import get_object_or_404
-from django import http
 from rest_framework.request import Request
 
 class SessionResolverMixin:

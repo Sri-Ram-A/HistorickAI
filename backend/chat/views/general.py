@@ -1,357 +1,319 @@
-# import json
-# from loguru import logger
-# from rest_framework.views import APIView
-# from rest_framework.request import Request
-# from rest_framework.response import Response
-# from rest_framework import status
-# from django.shortcuts import get_object_or_404
-# from drf_spectacular.utils import extend_schema
-# from typing import cast, Dict, Any
+import json
+from loguru import logger
+from rest_framework.views import APIView
+from rest_framework.request import Request
+from rest_framework.response import Response
+from rest_framework import status
+from drf_spectacular.utils import extend_schema
+from typing import cast, Dict, Any
 
-# from folders.models import Folder
-# # from folders.signals import embedding_model
-# import chat.model as model
-# import chat.models as models
-# import chat.system_instructions as system_instructions
-# import chat.serializers.general as serializers
-# import chat.schemas as schemas
-# from chat.mixin import SessionResolverMixin
-# from chat.helper import search_google_image
-# # Create your views here.
-# TOP_K = 5
+# from folders.signals import embedding_model
+import chat.model as model
+import chat.models as models
+import chat.system_instructions as system_instructions
+import chat.serializers.general as serializers
+import chat.schemas as schemas
+from chat.mixin import SessionResolverMixin
+from chat.helper import search_google_image
+# Create your views here.
+TOP_K = 5
 
-# @extend_schema( # Done
-#     tags=["Create"],
-#     summary="Retrieve relevant chunks from a folder using semantic search",
-#     description="Performs vector similarity search to find the most relevant document chunks based on the query.",
-# )
-# class RetrieveChunksView(APIView):
-#     serializer_class = serializers.RetrieveRequestSerializer
+@extend_schema( # Done
+    tags=["Create"],
+    summary="Generate a timeline from a query",
+    description="Creates a structured timeline with events and dates based on the provided query content.",
+)
+class CreateTimelineAPIView(SessionResolverMixin, APIView):
+    serializer_class = serializers.TimelineRequestSerializer
 
-#     def post(self, request):
-#         # Validate request
-#         serializer = self.serializer_class(data=request.data)
-#         serializer.is_valid(raise_exception=True)
-#         validated = cast(Dict[str, Any], serializer.validated_data)
+    def post(self, request: Request):
+        # Validate request
+        request_serializer = self.serializer_class(data=request.data)
+        request_serializer.is_valid(raise_exception=True)
+        validated = cast(Dict[str, Any], request_serializer.validated_data)
 
-#         # Retrieve required keys
-#         folder_id = validated["folder_id"]
-#         query = validated["query"]
+        query = validated["query"]
+        # from your mixin
+        session = self.get_session(request)
+        try:
+            llm_input = f"""
+                Create a clear, chronological timeline from the following content.
+                User query:
+                {query}
+                Output must include:
+                - A timeline title
+                - Ordered events with dates and descriptions
+            """
+            raw_response: str = model.generate(
+                schema=schemas.general.TimelineOutput,
+                system_instruction=system_instructions.timeline_instruction,
+                query=llm_input,
+            )
+            if not raw_response:
+                return Response({"error": "Timeline generation failed"},status=status.HTTP_500_INTERNAL_SERVER_ERROR,)
+            timeline = schemas.general.TimelineOutput.model_validate_json(raw_response)
+            models.Timeline.objects.create(
+                session=session,
+                query=query,
+                title=timeline.title,
+                response=timeline.model_dump(),
+            )
 
-#         # Fetch model - Get the Chunks from the database
-#         folder = get_object_or_404(Folder, id=folder_id)
-#         query_embedding = embedding_model.encode(query, normalize_embeddings=True).tolist()
-#         chunks = (
-#             Chunk.objects
-#             .filter(folder=folder)
-#             .annotate(score=CosineDistance("embedding", query_embedding))
-#             .order_by("score")[:TOP_K]
-#         )
+            # Replace with actual images urls from google
+            for event in timeline.events:
+                try:
+                    imgs = search_google_image(event.title or event.heading)
+                    event.image_source = imgs[0] if imgs else ""
+                except Exception:
+                    event.image_source = ""
+            return Response(timeline.model_dump(), status=status.HTTP_200_OK)
 
-#         # Send response
-#         results = serializers.ChunkResultSerializer(chunks, many=True).data
-#         return Response(
-#             {"count": len(results), "results": results},
-#             status=status.HTTP_200_OK
-#         )
-
-
-# @extend_schema( # Done
-#     tags=["Create"],
-#     summary="Generate a timeline from a query",
-#     description="Creates a structured timeline with events and dates based on the provided query content.",
-# )
-# class CreateTimelineAPIView(SessionResolverMixin, APIView):
-#     serializer_class = serializers.TimelineRequestSerializer
-
-#     def post(self, request: Request):
-#         # Validate request
-#         request_serializer = self.serializer_class(data=request.data)
-#         request_serializer.is_valid(raise_exception=True)
-#         validated = cast(Dict[str, Any], request_serializer.validated_data)
-
-#         query = validated["query"]
-#         # from your mixin
-#         session = self.get_session(request)
-#         try:
-#             llm_input = f"""
-#                 Create a clear, chronological timeline from the following content.
-#                 User query:
-#                 {query}
-#                 Output must include:
-#                 - A timeline title
-#                 - Ordered events with dates and descriptions
-#             """
-#             raw_response: str = model.generate(
-#                 schema=schemas.general.TimelineOutput,
-#                 system_instruction=system_instructions.timeline_instruction,
-#                 query=llm_input,
-#             )
-#             if not raw_response:
-#                 return Response({"error": "Timeline generation failed"},status=status.HTTP_500_INTERNAL_SERVER_ERROR,)
-#             timeline = schemas.general.TimelineOutput.model_validate_json(raw_response)
-#             models.Timeline.objects.create(
-#                 session=session,
-#                 query=query,
-#                 title=timeline.title,
-#                 response=timeline.model_dump(),
-#             )
-
-#             # Replace with actual images urls from google
-#             for event in timeline.events:
-#                 try:
-#                     imgs = search_google_image(event.title or event.heading)
-#                     event.image_source = imgs[0] if imgs else ""
-#                 except Exception:
-#                     event.image_source = ""
-#             return Response(timeline.model_dump(), status=status.HTTP_200_OK)
-
-#         except Exception as e:
-#             logger.exception("Timeline generation failed")
-#             return Response({"error": str(e)},status=status.HTTP_500_INTERNAL_SERVER_ERROR,)
+        except Exception as e:
+            logger.exception("Timeline generation failed")
+            return Response({"error": str(e)},status=status.HTTP_500_INTERNAL_SERVER_ERROR,)
 
 
-# @extend_schema(
-#     tags=["Create"],
-#     summary="Generate a TLDraw diagram from a query",
-#     description="Creates an interactive diagram representation using TLDraw format based on the specified query.",
-# )
-# class CreateDiagramAPIView(APIView):
-#     serializer_class = serializers.DiagramRequestSerializer
+@extend_schema(
+    tags=["Create"],
+    summary="Generate a TLDraw diagram from a query",
+    description="Creates an interactive diagram representation using TLDraw format based on the specified query.",
+)
+class CreateDiagramAPIView(APIView):
+    serializer_class = serializers.DiagramRequestSerializer
 
-#     def post(self, request):
-#         # Validate request
-#         serializer = self.serializer_class(data=request.data)
-#         serializer.is_valid(raise_exception=True)
-#         validated = cast(Dict[str, Any], serializer.validated_data)
+    def post(self, request):
+        # Validate request
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        validated = cast(Dict[str, Any], serializer.validated_data)
 
-#         # Retrieve required keys
-#         query = validated["query"]
+        # Retrieve required keys
+        query = validated["query"]
 
-#         try:
-#             # Fetch model - Generate diagram using LLM
-#             response_str = model.generate(
-#                 schema=schemas.tldraw.TldrawDiagram,
-#                 system_instruction=system_instructions.tldraw_instruction,
-#                 query=query,
-#             )
+        try:
+            # Fetch model - Generate diagram using LLM
+            response_str = model.generate(
+                schema=schemas.tldraw.TldrawDiagram,
+                system_instruction=system_instructions.tldraw_instruction,
+                query=query,
+            )
 
-#             # Parse and validate JSON
-#             parsed = json.loads(response_str)
-#             diagram_obj = schemas.tldraw.TldrawDiagram.model_validate(parsed)
+            # Parse and validate JSON
+            parsed = json.loads(response_str)
+            diagram_obj = schemas.tldraw.TldrawDiagram.model_validate(parsed)
 
-#             # Send response
-#             return Response(diagram_obj.model_dump(), status=status.HTTP_200_OK)
+            # Send response
+            return Response(diagram_obj.model_dump(), status=status.HTTP_200_OK)
 
-#         except Exception as e:
-#             logger.exception("Diagram generation failed")
-#             return Response({"error": str(e)},status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        except Exception as e:
+            logger.exception("Diagram generation failed")
+            return Response({"error": str(e)},status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-# @extend_schema( # Done
-#     tags=["Create"],
-#     summary="Generate Mermaid diagrams from natural language",
-#     description="Creates various types of Mermaid diagrams (flowchart, sequence, class, etc.) from text descriptions.",
-# )
-# class CreateChartAPIView(SessionResolverMixin,APIView):
-#     serializer_class = serializers.FlowchartRequestSerializer
+@extend_schema( # Done
+    tags=["Create"],
+    summary="Generate Mermaid diagrams from natural language",
+    description="Creates various types of Mermaid diagrams (flowchart, sequence, class, etc.) from text descriptions.",
+)
+class CreateChartAPIView(SessionResolverMixin,APIView):
+    serializer_class = serializers.FlowchartRequestSerializer
 
-#     def post(self, request:Request):
-#         # Validate request
-#         request_serializer = self.serializer_class(data=request.data)
-#         request_serializer.is_valid(raise_exception=True)
-#         request_validated = cast(Dict[str, Any], request_serializer.validated_data)
-#         # Retrieve required keys
-#         diagram_type = request_validated.get("type")
-#         query = request_validated.get("query")
-#         # Available from Django Mixin
-#         session = self.get_session(request) 
+    def post(self, request:Request):
+        # Validate request
+        request_serializer = self.serializer_class(data=request.data)
+        request_serializer.is_valid(raise_exception=True)
+        request_validated = cast(Dict[str, Any], request_serializer.validated_data)
+        # Retrieve required keys
+        diagram_type = request_validated.get("type")
+        query = request_validated.get("query")
+        # Available from Django Mixin
+        session = self.get_session(request) 
 
-#         try:
-#             # Build the LLM input
-#             llm_input = f"""
-#                 Diagram Type: {diagram_type}
-#                 User Request: {query}
-#                 Generate a {diagram_type} diagram that accurately represents this request.
-#                 Ensure the Mermaid code is syntactically correct and will render properly.
-#             """
-#             # Fetch model - Generate diagram using LLM
-#             raw_response : str = model.generate(
-#                 schema=schemas.general.DiagramOutput,
-#                 system_instruction=system_instructions.mermaid_instruction,
-#                 query=llm_input
-#             )
-#             if not raw_response:
-#                 logger.error("Empty model response for diagram generation")
-#                 return Response({"error": "Diagram generation failed"},status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-#             # Parse the response
-#             parsed = json.loads(raw_response)
-#             # Validate response
-#             diagram = schemas.general.DiagramOutput.model_validate_json(raw_response)
-#             models.Flowchart.objects.create(
-#                 session=session,
-#                 query=query,
-#                 response=diagram.code,
-#                 type=diagram_type,
-#                 title=diagram.title
-#             )
-#             return Response(diagram.model_dump(), status=status.HTTP_200_OK)
+        try:
+            # Build the LLM input
+            llm_input = f"""
+                Diagram Type: {diagram_type}
+                User Request: {query}
+                Generate a {diagram_type} diagram that accurately represents this request.
+                Ensure the Mermaid code is syntactically correct and will render properly.
+            """
+            # Fetch model - Generate diagram using LLM
+            raw_response : str = model.generate(
+                schema=schemas.general.DiagramOutput,
+                system_instruction=system_instructions.mermaid_instruction,
+                query=llm_input
+            )
+            if not raw_response:
+                logger.error("Empty model response for diagram generation")
+                return Response({"error": "Diagram generation failed"},status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            # Parse the response
+            parsed = json.loads(raw_response)
+            # Validate response
+            diagram = schemas.general.DiagramOutput.model_validate_json(raw_response)
+            models.Flowchart.objects.create(
+                session=session,
+                query=query,
+                response=diagram.code,
+                type=diagram_type,
+                title=diagram.title
+            )
+            return Response(diagram.model_dump(), status=status.HTTP_200_OK)
 
-#         except Exception as e:
-#             logger.exception("Diagram generation failed")
-#             return Response({"error": str(e)},status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        except Exception as e:
+            logger.exception("Diagram generation failed")
+            return Response({"error": str(e)},status=status.HTTP_500_INTERNAL_SERVER_ERROR)
    
 
-# @extend_schema(
-#     tags=["Create"],
-#     summary="Generate a quiz based on topic and configuration",
-#     description="Creates a customized quiz with specified difficulty, question count, and optional source materials.",
-# )
-# class CreateQuizAPIView(APIView):
-#     serializer_class = serializers.QuizRequestSerializer
+@extend_schema(
+    tags=["Create"],
+    summary="Generate a quiz based on topic and configuration",
+    description="Creates a customized quiz with specified difficulty, question count, and optional source materials.",
+)
+class CreateQuizAPIView(APIView):
+    serializer_class = serializers.QuizRequestSerializer
 
-#     def post(self, request):
-#         # Validate request
-#         serializer = self.serializer_class(data=request.data)
-#         serializer.is_valid(raise_exception=True)
-#         validated = cast(Dict[str, Any], serializer.validated_data)
+    def post(self, request):
+        # Validate request
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        validated = cast(Dict[str, Any], serializer.validated_data)
 
-#         # Retrieve required keys
-#         quiz_type = validated.get("type", "basic")
-#         topic = validated.get("topic")
-#         query = validated.get("query")
-#         num_questions = validated.get("num_questions")
-#         difficulty = validated.get("difficulty")
-#         time_limit = validated.get("time_limit")
-#         blooms = validated.get("blooms")
-#         sources = validated.get("sources", {})
+        # Retrieve required keys
+        quiz_type = validated.get("type", "basic")
+        topic = validated.get("topic")
+        query = validated.get("query")
+        num_questions = validated.get("num_questions")
+        difficulty = validated.get("difficulty")
+        time_limit = validated.get("time_limit")
+        blooms = validated.get("blooms")
+        sources = validated.get("sources", {})
 
-#         # Prepare LLM input based on quiz type
-#         if quiz_type == "basic":
-#             schema = list[schemas.quiz.BasicQuiz]
-#             system_instruction = system_instructions.quiz_instruction
-#             llm_input = (
-#                 f"Generate a quiz on {topic or query} "
-#                 f"with a total number of questions: {num_questions}. "
-#                 f"Make sure to set the quiz with a {difficulty} difficulty level. "
-#                 f"Ensure that the quiz is solved within {time_limit} minutes"
-#             )
-#         else:
-#             schema = list[schemas.quiz.Question] 
-#             system_instruction = system_instructions.unified_quiz_instruction
-#             parts = {
-#                 "Topic": topic,
-#                 "Query": query,
-#                 "Number of questions": num_questions,
-#                 "Difficulty level": difficulty,
-#                 "Bloom's taxonomy levels": ", ".join(blooms) if blooms else None,
-#                 "Time limit": f"{time_limit} minutes" if time_limit else None,
-#             }
-#             llm_input = "\n".join(f"{k}: {v}" for k, v in parts.items() if v is not None)
+        # Prepare LLM input based on quiz type
+        if quiz_type == "basic":
+            schema = list[schemas.quiz.BasicQuiz]
+            system_instruction = system_instructions.quiz_instruction
+            llm_input = (
+                f"Generate a quiz on {topic or query} "
+                f"with a total number of questions: {num_questions}. "
+                f"Make sure to set the quiz with a {difficulty} difficulty level. "
+                f"Ensure that the quiz is solved within {time_limit} minutes"
+            )
+        else:
+            schema = list[schemas.quiz.Question] 
+            system_instruction = system_instructions.unified_quiz_instruction
+            parts = {
+                "Topic": topic,
+                "Query": query,
+                "Number of questions": num_questions,
+                "Difficulty level": difficulty,
+                "Bloom's taxonomy levels": ", ".join(blooms) if blooms else None,
+                "Time limit": f"{time_limit} minutes" if time_limit else None,
+            }
+            llm_input = "\n".join(f"{k}: {v}" for k, v in parts.items() if v is not None)
 
-#         try:
-#             # Fetch model - Generate quiz using LLM
-#             raw_response = model.generate(schema, system_instruction, str(llm_input))
-#             if not raw_response:
-#                 logger.error("Empty model response")
-#                 return Response(
-#                     {"error": "Quiz generation failed"},
-#                     status=status.HTTP_500_INTERNAL_SERVER_ERROR
-#                 )
+        try:
+            # Fetch model - Generate quiz using LLM
+            raw_response = model.generate(schema, system_instruction, str(llm_input))
+            if not raw_response:
+                logger.error("Empty model response")
+                return Response(
+                    {"error": "Quiz generation failed"},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
 
-#             parsed = json.loads(raw_response)
-#             # Validate response
-#             resp_serializer = serializers.QuizResponseSerializer(
-#                 data={
-#                     "title": f"{topic or 'Assessment'} Assessment",
-#                     "questions": parsed
-#                 }
-#             )
-#             resp_serializer.is_valid(raise_exception=True)
-#             # Send response
-#             return Response(resp_serializer.data, status=status.HTTP_200_OK)
+            parsed = json.loads(raw_response)
+            # Validate response
+            resp_serializer = serializers.QuizResponseSerializer(
+                data={
+                    "title": f"{topic or 'Assessment'} Assessment",
+                    "questions": parsed
+                }
+            )
+            resp_serializer.is_valid(raise_exception=True)
+            # Send response
+            return Response(resp_serializer.data, status=status.HTTP_200_OK)
 
-#         except Exception as e:
-#             logger.exception("Quiz generation failed")
-#             return Response(
-#                 {"error": str(e)},
-#                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
-#             )
+        except Exception as e:
+            logger.exception("Quiz generation failed")
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 
-# @extend_schema(
-#     tags=["Create"],
-#     summary="Evaluate user answers for a quiz",
-#     description="Assesses user responses against correct answers and provides detailed feedback with marks.",
-# )
-# class EvaluateAnswersAPIView(APIView):
-#     serializer_class = serializers.EvaluateAnswersRequestSerializer
+@extend_schema(
+    tags=["Create"],
+    summary="Evaluate user answers for a quiz",
+    description="Assesses user responses against correct answers and provides detailed feedback with marks.",
+)
+class EvaluateAnswersAPIView(APIView):
+    serializer_class = serializers.EvaluateAnswersRequestSerializer
 
-#     def post(self, request):
-#         # Validate request
-#         serializer = self.serializer_class(data=request.data)
-#         serializer.is_valid(raise_exception=True)
-#         validated = cast(Dict[str, Any], serializer.validated_data)
+    def post(self, request):
+        # Validate request
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        validated = cast(Dict[str, Any], serializer.validated_data)
 
-#         # Retrieve required keys
-#         questions = validated.get('questions', [])
-#         answers = validated.get('answers', {})
-#         config = validated.get('config', {})
+        # Retrieve required keys
+        questions = validated.get('questions', [])
+        answers = validated.get('answers', {})
+        config = validated.get('config', {})
 
-#         try:
-#             # Prepare evaluation data
-#             evaluation_data = {
-#                 'questions': questions,
-#                 'user_answers': answers,
-#                 'config': config
-#             }
+        try:
+            # Prepare evaluation data
+            evaluation_data = {
+                'questions': questions,
+                'user_answers': answers,
+                'config': config
+            }
 
-#             system_instruction = system_instructions.evaluation_instruction
-#             llm_input = json.dumps(evaluation_data, indent=2)
+            system_instruction = system_instructions.evaluation_instruction
+            llm_input = json.dumps(evaluation_data, indent=2)
 
-#             # Fetch model - Evaluate answers using LLM
-#             raw_response = model.generate(
-#                 schema=schemas.quiz.EvaluationResult,
-#                 system_instruction=system_instruction,
-#                 query=llm_input
-#             )
+            # Fetch model - Evaluate answers using LLM
+            raw_response = model.generate(
+                schema=schemas.quiz.EvaluationResult,
+                system_instruction=system_instruction,
+                query=llm_input
+            )
 
-#             if not raw_response:
-#                 logger.error("Empty evaluation response")
-#                 return Response(
-#                     {"error": "Evaluation failed"},
-#                     status=status.HTTP_500_INTERNAL_SERVER_ERROR
-#                 )
+            if not raw_response:
+                logger.error("Empty evaluation response")
+                return Response(
+                    {"error": "Evaluation failed"},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                )
 
-#             evaluation_result = json.loads(raw_response)
+            evaluation_result = json.loads(raw_response)
 
-#             # Calculate statistics
-#             total_marks = sum(q.get('marks', 1) for q in questions)
-#             obtained_marks = evaluation_result.get('obtained_marks', 0)
-#             percentage = (obtained_marks / total_marks * 100) if total_marks > 0 else 0
+            # Calculate statistics
+            total_marks = sum(q.get('marks', 1) for q in questions)
+            obtained_marks = evaluation_result.get('obtained_marks', 0)
+            percentage = (obtained_marks / total_marks * 100) if total_marks > 0 else 0
 
-#             # Validate response
-#             response_data = {
-#                 'total_marks': total_marks,
-#                 'obtained_marks': obtained_marks,
-#                 'percentage': round(percentage, 2),
-#                 'feedback': evaluation_result.get('feedback', [])
-#             }
+            # Validate response
+            response_data = {
+                'total_marks': total_marks,
+                'obtained_marks': obtained_marks,
+                'percentage': round(percentage, 2),
+                'feedback': evaluation_result.get('feedback', [])
+            }
 
-#             resp_serializer = serializers.EvaluateAnswersResponseSerializer(
-#                 data=response_data
-#             )
-#             resp_serializer.is_valid(raise_exception=True)
+            resp_serializer = serializers.EvaluateAnswersResponseSerializer(
+                data=response_data
+            )
+            resp_serializer.is_valid(raise_exception=True)
 
-#             # Send response
-#             return Response(resp_serializer.data, status=status.HTTP_200_OK)
+            # Send response
+            return Response(resp_serializer.data, status=status.HTTP_200_OK)
 
-#         except Exception as e:
-#             logger.exception("Answer evaluation failed")
-#             return Response(
-#                 {"error": str(e)},
-#                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
-#             )
+        except Exception as e:
+            logger.exception("Answer evaluation failed")
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 
      

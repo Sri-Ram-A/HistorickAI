@@ -17,3 +17,7 @@ Pillow
 transformers
 groq
 serpapi
+sentence-transformers
+
+# hybrid chunker dependencies   
+tree-sitter
