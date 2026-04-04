@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { DM_Sans } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
-import { Providers } from "@/components/folder/providers";
 
 import "./globals.css";
 
@@ -32,9 +31,7 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <Providers>
             {children}
-          </Providers>
           <Toaster richColors />
         </ThemeProvider>
       </body>

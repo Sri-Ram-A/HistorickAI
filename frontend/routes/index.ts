@@ -32,44 +32,61 @@ async function refreshAccessToken(): Promise<string> {
 
 export async function REQUEST(
   method: HttpMethod,
-  url: string,
+  endpoint: string,
   body?: any,
   options?: { isMultipart?: boolean }
 ) {
-  const makeRequest = async () => {
+  async function sendRequest(accessToken: string | null) {
     const headers: Record<string, string> = {};
-    if (!options?.isMultipart) headers["Content-Type"] = "application/json";
-
-    const access = localStorage.getItem("access");
-    if (access) headers["Authorization"] = `Bearer ${access}`;
-
-    return fetch(`${BASE_URL}api/${url}`, {
-      method,
-      headers,
-      body: options?.isMultipart ? body : body ? JSON.stringify(body) : null,
+    if (!options?.isMultipart) {
+      headers["Content-Type"] = "application/json";
+    }
+    if (accessToken) {
+      headers["Authorization"] = `Bearer ${accessToken}`;
+    }
+    const response = await fetch(`${BASE_URL}api/${endpoint}`, {
+      method: method,
+      headers: headers,
+      body: options?.isMultipart
+        ? body
+        : body
+          ? JSON.stringify(body)
+          : null,
     });
-  };
-
-  let res = await makeRequest();
-
-  if (res.status === 401) {
-    await refreshAccessToken();
-    res = await makeRequest();
+    return response;
   }
 
-  if (!res.ok) {
-    let message = "Request failed";
+  let accessToken = localStorage.getItem("access");
+  let response = await sendRequest(accessToken);
+
+  // If token expired → refresh and retry once
+  if (response.status === 401) {
+    accessToken = await refreshAccessToken();
+    response = await sendRequest(accessToken);
+  }
+
+  // If still failing → throw error
+  if (!response.ok) {
+    let errorMessage = "Request failed";
     try {
-      const data = await res.json();
-      message = data.detail || message;
+      const errorData = await response.json();
+      if (errorData.detail) {
+        errorMessage = errorData.detail;
+      }
     } catch { }
-    throw new Error(message);
+    throw new Error(errorMessage);
   }
 
-  if (res.status === 204) return null;
+  // No content
+  if (response.status === 204) {
+    return null;
+  }
 
-  const contentType = res.headers.get("content-type");
-  if (contentType?.includes("application/json")) return res.json();
+  // Parse JSON if available
+  const contentType = response.headers.get("content-type");
+  if (contentType && contentType.includes("application/json")) {
+    return await response.json();
+  }
 
   return null;
 }

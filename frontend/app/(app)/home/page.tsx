@@ -2,12 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useExplorerData, useExplorerActions } from "@/components/folder/folder-queries";
-
+import { useExplorerStore } from "@/store/explorer";
 export default function Home() {
   const router = useRouter();
-  const { tree, loading } = useExplorerData();
-  const { createFolder } = useExplorerActions();
+  const { tree, loading } = useExplorerStore();
+  const { createFolder } = useExplorerStore();
 
   const [username, setUsername] = useState("User");
   const [newFolder, setNewFolder] = useState("");
