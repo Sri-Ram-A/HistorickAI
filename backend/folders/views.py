@@ -22,9 +22,17 @@ class FolderView(APIView):
     @extend_schema(tags=["Folders"], summary="Get folders or single folder")
     def get(self, request, id=None):
         if id:
-            folder = get_object_or_404(Folder, id=id, owner=request.user)
+            folder = get_object_or_404(
+                Folder.objects.select_related("parent", "owner"),
+                id=id,
+                owner=request.user,
+            )
             return Response(FolderSerializer(folder).data)
-        folders = Folder.objects.filter(owner=request.user).order_by("created_at")
+        folders = (
+            Folder.objects.filter(owner=request.user)
+            .select_related("parent", "owner")
+            .order_by("created_at")
+        )
         return Response(FolderSerializer(folders, many=True).data)
 
     @extend_schema(tags=["Folders"], summary="Create folder")
@@ -66,12 +74,12 @@ class FileView(APIView):
 
     @extend_schema(tags=["Files"], summary="Get files or single file")
     def get(self, request, id=None):
+        base_qs = File.objects.select_related("folder", "folder__owner")
         if id:
-            file_obj = get_object_or_404(File, id=id, folder__owner=request.user)
+            file_obj = get_object_or_404(base_qs, id=id, folder__owner=request.user)
             return Response(FileSerializer(file_obj).data)
-
         folder_id = request.query_params.get("folder")
-        qs = File.objects.filter(folder__owner=request.user)
+        qs = base_qs.filter(folder__owner=request.user)
         if folder_id:
             qs = qs.filter(folder_id=folder_id)
         return Response(FileSerializer(qs, many=True).data)
