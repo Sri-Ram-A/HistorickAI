@@ -3,67 +3,75 @@ import uuid
 from django.db import models
 from django.contrib.auth.models import User
 from django.db.models import Q, UniqueConstraint
-from folders.models import File,Folder
+from folders.models import File, Folder
 
-class Session(models.Model):
+class Notebook(models.Model):
     """Chat session model that stores conversation history.Each session is linked to a folder where the conversation is stored."""
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    session_folder = models.ForeignKey(Folder,on_delete=models.CASCADE,related_name='sessions',help_text="Folder where this session's messages are stored")
+    folder = models.ForeignKey(Folder,on_delete=models.CASCADE,related_name='sessions',help_text="Folder where this session's messages are stored")
+    title = models.CharField(max_length=255)
+    description = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    image_path = models.CharField(max_length=500,null=True,blank=True,help_text="Path to the session's representative image (optional)")
     class Meta:
         ordering = ['-updated_at']
 
     def __str__(self):
-        return f"Session {self.id} - {self.session_folder.name}"
-
-class Flowchart(models.Model):
-    DIAGRAM_TYPES = [
-        ("flowchart", "Flowchart"),
-        ("sequence", "Sequence"),
-        ("gantt", "Gantt"),
-        ("class", "Class"),
-        ("git", "Git"),
-        ("er", "ER"),
-        ("journey", "Journey"),
-        ("quadrant", "Quadrant"),
-        ("xy", "XY"),
-    ]
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    session = models.ForeignKey(Session,on_delete=models.CASCADE,related_name="flowcharts")
-    query = models.TextField()
-    title = models.CharField(max_length=255,null=True,blank=True)
-    response = models.TextField()
-    type = models.CharField(choices=DIAGRAM_TYPES, help_text="Type of flowchart to generate")
-    created_at = models.DateTimeField(auto_now_add=True)
-    class Meta:
-        indexes = [models.Index(fields=["session"]),models.Index(fields=["created_at"]),]
-    
-    def __str__(self):
-        return f"{self.type}:{self.query}"
-
-class Timeline(models.Model):
-    session = models.ForeignKey(Session, on_delete=models.CASCADE, related_name="timelines")
-    query = models.TextField()
-    title = models.CharField(max_length=255)
-    response = models.JSONField()
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return self.title
+        return f"Session {self.title} - {self.folder.name}"
 
 
 class Message(models.Model):
-    """ Individual message in a chat session. Stores both user and AI messages. """
-    ROLE_CHOICES = [('user', 'User'),('assistant', 'Assistant')]
+    """Individual message in a chat session. Stores both user and assistant messages."""
+
+    ROLE_CHOICES = [("user", "User"), ("assistant", "Assistant")]
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    session = models.ForeignKey(Session,on_delete=models.CASCADE,related_name='messages')
+    notebook = models.ForeignKey(
+        Notebook, on_delete=models.CASCADE, related_name="messages"
+    )
     role = models.CharField(max_length=10, choices=ROLE_CHOICES)
     content = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        ordering = ['created_at']
+        ordering = ["created_at"]
 
     def __str__(self):
         return f"{self.role}: {self.content[:50]}..."
+
+
+# class Flowchart(models.Model):
+#     DIAGRAM_TYPES = [
+#         ("flowchart", "Flowchart"),
+#         ("sequence", "Sequence"),
+#         ("gantt", "Gantt"),
+#         ("class", "Class"),
+#         ("git", "Git"),
+#         ("er", "ER"),
+#         ("journey", "Journey"),
+#         ("quadrant", "Quadrant"),
+#         ("xy", "XY"),
+#     ]
+#     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+#     session = models.ForeignKey(Notebook,on_delete=models.CASCADE,related_name="flowcharts")
+#     query = models.TextField()
+#     title = models.CharField(max_length=255,null=True,blank=True)
+#     response = models.TextField()
+#     type = models.CharField(choices=DIAGRAM_TYPES, help_text="Type of flowchart to generate")
+#     created_at = models.DateTimeField(auto_now_add=True)
+#     class Meta:
+#         indexes = [models.Index(fields=["session"]),models.Index(fields=["created_at"]),]
+
+#     def __str__(self):
+#         return f"{self.type}:{self.query}"
+
+# class Timeline(models.Model):
+#     session = models.ForeignKey(Notebook, on_delete=models.CASCADE, related_name="timelines")
+#     query = models.TextField()
+#     title = models.CharField(max_length=255)
+#     response = models.JSONField()
+#     created_at = models.DateTimeField(auto_now_add=True)
+
+#     def __str__(self):
+#         return self.title
+

@@ -1,7 +1,7 @@
 from loguru import logger
 from django.db.models.signals import post_save, pre_delete
 from django.dispatch import receiver
-
+from django.conf import settings
 from folders.models import File
 from vector.client import vector_store
 
@@ -13,6 +13,9 @@ def handle_file_upload(sender, instance: File, created: bool, **kwargs) -> None:
     Uses select_related to load folder + owner in one query, so
     vector_store.process_and_index() runs with zero extra DB hits.
     """
+    if settings.RUNNING_MIGRATIONS:
+        logger.warning("Running in migration mode - skipping file processing signal")
+        return
     if not created:
         return
     file = File.objects.select_related("folder", "folder__owner").get(pk=instance.pk)
@@ -40,6 +43,9 @@ def handle_file_delete(sender, instance: File, **kwargs) -> None:
     fields on the instance so either would work, but pre_delete is the
     safer convention for cleanup tasks.
     """
+    if settings.RUNNING_MIGRATIONS:
+        logger.warning("Running in migration mode - skipping file processing signal")
+        return
     if not instance.processed:
         # File was never indexed — nothing to clean up in Chroma.
         return

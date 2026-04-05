@@ -11,6 +11,5 @@ urlpatterns = [
     # path("generate_quiz/", general_views.CreateQuizAPIView.as_view(),name="generate-quiz"),
     # path("evaluate_answers/",general_views.EvaluateAnswersAPIView.as_view(),name="evaluate-answers"),
 
-    path("start_session/",chat_views.StartSessionAPIView.as_view(),name="start-session"),
-    path("message/",chat_views.ChatMessageAPIView.as_view(),name="chat-message"),
+    path("message/",chat_views.ChatAPIView.as_view(),name="chat-message"),
 ]

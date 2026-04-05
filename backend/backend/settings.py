@@ -12,6 +12,7 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 from datetime import timedelta ###
 from pathlib import Path
 import os
+import sys
 from dotenv import load_dotenv
 load_dotenv(".env")
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -167,3 +168,7 @@ SIMPLE_JWT = {
 }
 CORS_ALLOW_ALL_ORIGINS = True
 X_FRAME_OPTIONS = "ALLOWALL" ### So that frontend can use IFrame to show PDFs
+
+RUNNING_MIGRATIONS = any(
+    cmd in sys.argv for cmd in ["migrate", "makemigrations"]
+)

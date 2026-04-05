@@ -1,86 +1,86 @@
-from rest_framework import serializers
-from folders.models import Folder
+# from rest_framework import serializers
+# from folders.models import Folder
 
-# Chunk Retrieval Serializers
-class RetrieveRequestSerializer(serializers.Serializer):
-    folder_id = serializers.UUIDField()
-    query = serializers.CharField()
+# # Chunk Retrieval Serializers
+# class RetrieveRequestSerializer(serializers.Serializer):
+#     folder_id = serializers.UUIDField()
+#     query = serializers.CharField()
 
-class ChunkResultSerializer(serializers.ModelSerializer):
-    # score = serializers.FloatField(read_only=True)
-    # class Meta:
-    #     model = Chunk
-    #     fields = ["id","text","metadata","score","score"]
-    pass
+# class ChunkResultSerializer(serializers.ModelSerializer):
+#     # score = serializers.FloatField(read_only=True)
+#     # class Meta:
+#     #     model = Chunk
+#     #     fields = ["id","text","metadata","score","score"]
+#     pass
 
-class RetrieveResponseSerializer(serializers.Serializer):
-    count = serializers.IntegerField()
-    results = ChunkResultSerializer(many=True)
+# class RetrieveResponseSerializer(serializers.Serializer):
+#     count = serializers.IntegerField()
+#     results = ChunkResultSerializer(many=True)
 
-# Timeline Serializers
-class TimelineRequestSerializer(serializers.Serializer):
-    source_folder_id = serializers.UUIDField(required=True,help_text="ID of the source folder (parent folder) to start session ")
-    query = serializers.CharField(max_length=2000,required=True,help_text="Description of the Timeline to generate")
+# # Timeline Serializers
+# class TimelineRequestSerializer(serializers.Serializer):
+#     source_folder_id = serializers.UUIDField(required=True,help_text="ID of the source folder (parent folder) to start session ")
+#     query = serializers.CharField(max_length=2000,required=True,help_text="Description of the Timeline to generate")
     
 
-# Flowchart Diagram Serializers
-class FlowchartRequestSerializer(serializers.Serializer):
-    source_folder_id = serializers.UUIDField(required=True,help_text="ID of the source folder (parent folder) to start session ")
-    type = serializers.ChoiceField(choices=["flowchart","sequence","gantt","class","git","er","journey","quadrant","xy"],required=True,help_text="Type of chart to generate")
-    query = serializers.CharField(max_length=2000,required=True,help_text="Description of the chart to generate")
+# # Flowchart Diagram Serializers
+# class FlowchartRequestSerializer(serializers.Serializer):
+#     source_folder_id = serializers.UUIDField(required=True,help_text="ID of the source folder (parent folder) to start session ")
+#     type = serializers.ChoiceField(choices=["flowchart","sequence","gantt","class","git","er","journey","quadrant","xy"],required=True,help_text="Type of chart to generate")
+#     query = serializers.CharField(max_length=2000,required=True,help_text="Description of the chart to generate")
     
-    def validate_query(self, value):
-        if not value.strip():
-            raise serializers.ValidationError("Query cannot be empty")
-        return value.strip()
+#     def validate_query(self, value):
+#         if not value.strip():
+#             raise serializers.ValidationError("Query cannot be empty")
+#         return value.strip()
 
-class DiagramRequestSerializer(serializers.Serializer):
-    query = serializers.CharField(max_length=2000,required=True,help_text="Description of the diagram to generate")
+# class DiagramRequestSerializer(serializers.Serializer):
+#     query = serializers.CharField(max_length=2000,required=True,help_text="Description of the diagram to generate")
 
 
-# Quiz Preparation Serializers
-class SourcesSerializer(serializers.Serializer):
-    folders = serializers.ListField(
-        child=serializers.CharField(),
-        required=False,
-        default=list
-    )
-    files = serializers.ListField(
-        child=serializers.CharField(),
-        required=False,
-        default=list
-    )
+# # Quiz Preparation Serializers
+# class SourcesSerializer(serializers.Serializer):
+#     folders = serializers.ListField(
+#         child=serializers.CharField(),
+#         required=False,
+#         default=list
+#     )
+#     files = serializers.ListField(
+#         child=serializers.CharField(),
+#         required=False,
+#         default=list
+#     )
 
-class QuizRequestSerializer(serializers.Serializer):
-    type = serializers.ChoiceField(choices=["basic", "advanced", "question-bank"],required=True)
-    topic = serializers.CharField(max_length=500,required=False,allow_blank=True,allow_null=True)
-    query = serializers.CharField(max_length=1000,required=False,allow_blank=False,allow_null=False)
-    num_questions = serializers.IntegerField(default=10,required=False,min_value=1,max_value=50)
-    difficulty = serializers.ChoiceField(choices=["easy", "medium", "hard"],required=False,allow_null=True)
-    time_limit = serializers.IntegerField(required=False,allow_null=True,min_value=1,help_text="Time limit in minutes")
-    blooms = serializers.ListField(
-        child=serializers.ChoiceField(choices=[
-            "remember", "understand", "apply",
-            "analyze", "evaluate", "create"
-        ]),
-        required=False,
-        default=list
-    )
-    sources = SourcesSerializer(required=True)
+# class QuizRequestSerializer(serializers.Serializer):
+#     type = serializers.ChoiceField(choices=["basic", "advanced", "question-bank"],required=True)
+#     topic = serializers.CharField(max_length=500,required=False,allow_blank=True,allow_null=True)
+#     query = serializers.CharField(max_length=1000,required=False,allow_blank=False,allow_null=False)
+#     num_questions = serializers.IntegerField(default=10,required=False,min_value=1,max_value=50)
+#     difficulty = serializers.ChoiceField(choices=["easy", "medium", "hard"],required=False,allow_null=True)
+#     time_limit = serializers.IntegerField(required=False,allow_null=True,min_value=1,help_text="Time limit in minutes")
+#     blooms = serializers.ListField(
+#         child=serializers.ChoiceField(choices=[
+#             "remember", "understand", "apply",
+#             "analyze", "evaluate", "create"
+#         ]),
+#         required=False,
+#         default=list
+#     )
+#     sources = SourcesSerializer(required=True)
 
-class QuizResponseSerializer(serializers.Serializer):
-    title = serializers.CharField()
-    questions = serializers.ListField(child=serializers.DictField())
+# class QuizResponseSerializer(serializers.Serializer):
+#     title = serializers.CharField()
+#     questions = serializers.ListField(child=serializers.DictField())
 
-# Quiz Evaluation Serializers
-class EvaluateAnswersRequestSerializer(serializers.Serializer):
-    questions = serializers.ListField(child=serializers.DictField())
-    answers = serializers.DictField()
-    config = serializers.DictField()
+# # Quiz Evaluation Serializers
+# class EvaluateAnswersRequestSerializer(serializers.Serializer):
+#     questions = serializers.ListField(child=serializers.DictField())
+#     answers = serializers.DictField()
+#     config = serializers.DictField()
 
-class EvaluateAnswersResponseSerializer(serializers.Serializer):
-    total_marks = serializers.IntegerField()
-    obtained_marks = serializers.FloatField()
-    percentage = serializers.FloatField()
-    feedback = serializers.ListField(child=serializers.DictField())
+# class EvaluateAnswersResponseSerializer(serializers.Serializer):
+#     total_marks = serializers.IntegerField()
+#     obtained_marks = serializers.FloatField()
+#     percentage = serializers.FloatField()
+#     feedback = serializers.ListField(child=serializers.DictField())
 

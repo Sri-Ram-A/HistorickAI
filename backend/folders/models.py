@@ -54,21 +54,3 @@ class File(models.Model):
         return f"{self.name}"
 
 
-class Notebook(models.Model):
-    id = models.CharField(
-        primary_key=True,
-        max_length=22,
-        default=shortuuid.uuid,
-        editable=False
-    )
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    folder = models.ForeignKey(Folder, on_delete=models.CASCADE)
-    title = models.CharField(max_length=255)
-    description = models.TextField(blank=True)
-    use_subfolders = models.BooleanField(default=True)
-
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    def __str__(self):
-        return f"{self.title}"

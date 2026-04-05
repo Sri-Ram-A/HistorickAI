@@ -1,6 +1,6 @@
 from loguru import logger
 import time
-
+from django.conf import settings
 import chromadb
 from sentence_transformers import SentenceTransformer
 from transformers import AutoTokenizer
@@ -113,6 +113,8 @@ class VectorStore:
             n_results=k,
             where={"folder_id": folder_id},
         )
-
-
-vector_store = VectorStore()
+vector_store = None
+if settings.RUNNING_MIGRATIONS:
+    logger.warning("Running in migration mode - VectorStore will not initialize")
+else:
+    vector_store = VectorStore()

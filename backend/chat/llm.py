@@ -24,7 +24,7 @@ def generate(schema=None,system_instruction="No system instruction provided",que
         response_format = omit
 
     completion = client.chat.completions.create(
-        model="openai/gpt-oss-120b",
+        model="meta-llama/llama-4-scout-17b-16e-instruct",
         messages=[
             { "role": "system", "content": system_instruction},
             {"role": "user","content": content}

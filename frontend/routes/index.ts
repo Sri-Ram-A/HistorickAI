@@ -19,12 +19,10 @@ async function refreshAccessToken(): Promise<string> {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ refresh }),
   });
-
   if (!res.ok) {
     localStorage.clear();
     throw new Error("Session expired");
   }
-
   const data = await res.json();
   localStorage.setItem("access", data.access);
   return data.access;

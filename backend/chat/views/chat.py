@@ -1,139 +1,163 @@
-from datetime import datetime
-from loguru import logger
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from drf_spectacular.utils import extend_schema
-from typing import cast
+from django.shortcuts import get_object_or_404
+from django.db import transaction
+from loguru import logger
 
 from folders.models import Folder
-import chat.model as model
-from chat.models import Session,Message
-import chat.system_instructions as system_instructions
-import chat.serializers.chat as serializers
+from chat.models import Notebook, Message
+from vector.client import vector_store
+from chat.llm import generate
 
-@extend_schema(
-    tags=["Chat"],
-    summary="Start a Chatting Session",
-    description="Starts the session",
-)
-class StartSessionAPIView(APIView):
+
+# ──────────────────────────────────────────────
+# Helper functions
+# ──────────────────────────────────────────────
+
+def get_notebook_for_folder(folder: Folder) -> Notebook:
     """
-    Start a new chat session.
-    Creates or retrieves a session folder based on today's date,
-    then creates a session and stores the first message."""
-    # permission_classes = [IsAuthenticated]
-    serializer_class = serializers.StartSessionRequestSerializer
+    Return the existing Notebook for this folder,
+    or create one if it does not yet exist.
+    """
+    with transaction.atomic():
+        notebook, created = Notebook.objects.get_or_create(
+            folder=folder,
+            defaults={"title": f"Notebook — {folder.name}"},
+        )
+        if created:
+            logger.info("Created new notebook %s for folder %s", notebook.id, folder.id)
+        return notebook
 
+def retrieve_context_for_query(user_id: str, folder_id: str, query: str) -> str:
+    """
+    Query the vector store and return the top-k chunks joined as a single
+    context string.  Returns an empty string when nothing is found so that
+    the caller can decide how to handle it.
+    """
+    results = vector_store.query(
+        user_id=user_id,
+        folder_id=folder_id,
+        query=query,
+        k=1,
+    )
+    documents = results.get("documents", [[]])
+    chunks = documents[0] if documents else []
+    logger.debug(f"Retrieved {len(chunks)} chunks for query")
+    return "\n".join(chunks)
+
+
+def build_refined_prompt(context: str) -> str:
+    """
+    Combine the base system instruction with the retrieved context.
+    Keeping this as a separate function makes it easy to extend later
+    (e.g. add persona, language, tone constraints).
+    """
+    refined_prompt = (
+        "You are a helpful assistant. "
+        "Answer the user's question using ONLY the context provided below. "
+        "If the context does not contain enough information, say so honestly.\n\n"
+        f"Context:\n{context}"
+    )
+    return refined_prompt
+
+
+def store_messages_to_database(notebook: Notebook, user_query: str, assistant_answer: str) -> None:
+    """
+    Persist the user message and the assistant reply in one bulk insert.
+    Isolated here so it can later be handed off to a Celery task with
+    minimal changes (just call delay() instead of calling this directly).
+    """
+    Message.objects.bulk_create([
+        Message(notebook=notebook, role="user",      content=user_query),
+        Message(notebook=notebook, role="assistant", content=assistant_answer),
+    ])
+    logger.debug(f"Stored 2 messages for notebook {notebook.id}")
+
+
+# ──────────────────────────────────────────────
+# View
+# ──────────────────────────────────────────────
+
+class ChatAPIView(APIView):
+
+    @extend_schema(tags=["Chat"], summary="RAG chat — send a message")
     def post(self, request):
-        # Request Validation
-        serializer = self.serializer_class(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        
-        # Key access
-        validated = cast(dict,serializer.validated_data)
-        source_folder_id = validated.get('source_folder_id')
-        user_message = validated.get('message')
-        
-        try:
-            # Get source folder
-            source_folder = Folder.objects.get(id=source_folder_id,owner=request.user)
-            # Generate session name from today's date
-            session_name = datetime.now().strftime("%d:%m:%Y")
-            # Check if session folder exists
-            session_folder, created = Folder.objects.get_or_create(name=session_name,parent=source_folder,owner=request.user)
-            if created:
-                logger.info(f"Created new session folder: {session_name}")
-            else:
-                logger.info(f"Using existing session folder: {session_name}")
-            # Create or get session
-            session, session_created = Session.objects.get_or_create(session_folder=session_folder)
-            # Store user message
-            user_msg = Message.objects.create(session=session,role='user',content=user_message)
-            # Get LLM response
-            ai_response = model.generate(
-                schema=None,
-                system_instruction=system_instructions.chat_instruction,
-                query=str(user_message)
-            )
-            # Store AI response
-            ai_msg = Message.objects.create(
-                session=session,
-                role='assistant',
-                content=ai_response
-            )
-            # Prepare response
-            response_data = {
-                'session_id': str(session.id),
-                'session_folder_id': str(session_folder.id),
-                'session_name': session_name,
-                'ai_response': ai_response
-            }
-            resp_serializer = serializers.StartSessionResponseSerializer(data=response_data)
-            resp_serializer.is_valid(raise_exception=True)
-            return Response(resp_serializer.data, status=status.HTTP_201_CREATED)
-        
-        except Exception as e:
-            logger.exception("Failed to start session")
-            return Response({"error": str(e)},status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        logger.debug("POST body received: %s", request.data)
+        user = request.user
+        folder_id = request.data.get("folder_id")
+        query = request.data.get("query", "").strip()
 
-
-@extend_schema(
-    tags=["Chat"],
-    summary="Continue the chatting session",
-    description="Continue the session",
-)
-class ChatMessageAPIView(APIView):
-    """
-    Send a message in an existing chat session.
-    Uses session_folder_id to retrieve the session and continue the conversation.
-    """
-    # permission_classes = [IsAuthenticated]
-    serializer_class = serializers.ChatMessageRequestSerializer
-
-    def post(self, request):
-        serializer = self.serializer_class(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        validated  = cast(dict,serializer.validated_data)
-        
-        session_folder_id = validated['session_folder_id']
-        user_message = validated['message']
-        
-        try:
-            # Get session folder
-            session_folder = Folder.objects.get(id=session_folder_id,owner=request.user)
-            # Get session (should exist since we're in an ongoing conversation)
-            try:
-                session = Session.objects.get(session_folder=session_folder,)
-            except Session.DoesNotExist:
-                return Response({"error": "Session not found. Please start a new session."},status=status.HTTP_404_NOT_FOUND)
-            # Store user message
-            user_msg = Message.objects.create(session=session,role='user',content=user_message)
-            # Get LLM response
-            ai_response = model.generate(
-                schema=None,
-                system_instruction=system_instructions.chat_instruction,
-                query=str(user_message)
-            )
-            # Store AI response
-            ai_msg = Message.objects.create(
-                session=session,
-                role='assistant',
-                content=ai_response
-            )
-            # Prepare response
-            response_data = {
-                'ai_response': ai_response,
-                'message_id': str(ai_msg.id)
-            }
-            resp_serializer = serializers.ChatMessageResponseSerializer(data=response_data)
-            resp_serializer.is_valid(raise_exception=True)
-            
-            return Response(resp_serializer.data, status=status.HTTP_201_CREATED)
-        except Exception as e:
-            logger.exception("Failed to send message")
+        if not folder_id or not query:
             return Response(
-                {"error": str(e)},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                {"error": "Both 'folder_id' and 'query' are required."},
+                status=status.HTTP_400_BAD_REQUEST,
             )
-    
+
+        folder = get_object_or_404(Folder, id=folder_id, owner=user)
+        notebook = get_notebook_for_folder(folder)
+
+        context = retrieve_context_for_query(
+            user_id=str(user.id),
+            folder_id=str(folder.id),
+            query=query,
+        )
+
+        if not context:
+            logger.warning("No context found for folder %s", folder.id)
+            return Response(
+                {"error": "No relevant content found in this folder."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        refined_prompt = build_refined_prompt(context)
+        answer = generate(system_instruction=refined_prompt, query=query)
+        logger.info("Answer generated for notebook %s", notebook.id)
+
+        store_messages_to_database(notebook, query, answer)
+
+        return Response(
+            {
+                "answer": answer,
+                "notebook_id": str(notebook.id),
+            },
+            status=status.HTTP_200_OK,
+        )
+
+    @extend_schema(tags=["Chat"], summary="Fetch conversation history for a folder")
+    def get(self, request):
+        user = request.user
+        folder_id = request.query_params.get("folder_id")
+
+        if not folder_id:
+            return Response(
+                {"error": "'folder_id' query parameter is required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        notebook = Notebook.objects.filter(
+            folder_id=folder_id,
+            folder__owner=user,
+        ).first()
+
+        if not notebook:
+            return Response([], status=status.HTTP_200_OK)
+
+        messages = (
+            Message.objects.filter(notebook=notebook)
+            .order_by("created_at")
+            .values("role", "content", "created_at")
+        )
+
+        history = [
+            {
+                "role": message["role"],
+                "content": message["content"],
+                "created_at": message["created_at"].isoformat(),
+            }
+            for message in messages
+        ]
+
+        return Response(history, status=status.HTTP_200_OK)
+

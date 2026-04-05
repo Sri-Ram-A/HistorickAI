@@ -53,7 +53,7 @@ export default function LearnPage() {
     {
       title: "Chat with Documents",
       description: "Upload files and have intelligent conversations about content",
-      route: "chat",
+      route: `/${params.id}/chat`,
       image: "/images/animals/bear.png",
       badge: { text: "AI Chat", variant: "default", color: "bg-green-500" },
       icon: MessageSquare,
